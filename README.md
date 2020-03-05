@@ -1,7 +1,8 @@
 # Grid Game Groundwork for Unity
 
 A Unity project & level editor for making grid-based/block-pushing/Sokoban-like games.  
-Made with Unity 2018.x LTS
+Made with Unity 2018.x LTS  
+![Example GIF](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/ggg-demo.gif)\
 
 ## Dependencies:
 DOTween by Demigiant  
@@ -11,7 +12,6 @@ https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676
 ## Setting Up Scenes:
 - Add the "GameController" prefab to the scene  
 See "Example.unity"  
-![Example GIF](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/ggg-demo.gif)\
 
 ## Using the Editor:
 The editor window can be found under "Window" -> "Level Editor".
