@@ -10,7 +10,8 @@ https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676
 
 ## Setting Up Scenes:
 - Add the "GameController" prefab to the scene  
-See "Example.unity" (here's a GIF of it in action: http://toboggan.work/images/ggg-demo.gif)
+See "Example.unity"  
+![Example GIF](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/ggg-demo.gif)\
 
 ## Using the Editor:
 The editor window can be found under "Window" -> "Level Editor".
