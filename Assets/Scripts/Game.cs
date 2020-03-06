@@ -33,17 +33,13 @@ public class Game : MonoBehaviour {
 	}
 
 	void Start() {
-		GetRefs();
-		State.AddToUndoStack();
-		isMoving = false;
-	}
-
-	public static void GetRefs() {
 		movers = FindObjectsOfType<Mover>();
 		State.Init();
 		foreach (Mover mover in movers) {
 			State.AddMover(mover);
 		}
+		State.AddToUndoStack();
+		isMoving = false;
 	}
 
 	public void EditorRefresh() {

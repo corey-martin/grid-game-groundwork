@@ -3,6 +3,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using System.IO;
 
 public class LevelEditor : EditorWindow {
      
@@ -15,6 +16,8 @@ public class LevelEditor : EditorWindow {
 	};    
 	
     int spawnHeight = 0;
+	string levelName;
+	string levelPath = "Assets/Resources/Levels/";
                         
     public GameObject[] prefabs;
 
@@ -95,6 +98,82 @@ public class LevelEditor : EditorWindow {
         EditorGUILayout.EndHorizontal();
 		EditorGUILayout.Space();
 		EditorGUILayout.Space();
+
+		///////////////// SAVE //////////////////
+
+        levelName = EditorGUILayout.TextField("Level Name:", levelName);
+
+        if (GUILayout.Button("Save To Disk", GUILayout.Width(150))) {
+			
+        	string path = "Assets/Resources/Levels/" + levelName + ".txt";
+
+			if (File.Exists(path)) {
+				if (EditorUtility.DisplayDialog("Overwrite Level?", "Are you sure you want to overwrite `" + levelName + "`?", "Yes", "No")) {
+					SaveToDisk();
+				}
+			} else {
+				SaveToDisk();
+			}
+        }
+
+        if (GUILayout.Button("Load From Disk", GUILayout.Width(150))) {
+        	LoadFromDisk();
+        }
+
+		EditorGUILayout.Space();
+		EditorGUILayout.Space();
+	}
+
+	void SaveToDisk() {
+		Transform level = GetLevelObject().transform;
+
+		if(!System.IO.Directory.Exists(levelPath)) {
+			System.IO.Directory.CreateDirectory(levelPath);
+		}
+
+        string path = levelPath + levelName + ".txt";
+		StreamWriter writer = new StreamWriter(path, false);
+
+        foreach (Transform child in level) {
+			writer.WriteLine(child.name);
+			writer.WriteLine(child.position.x + "|" + child.position.y + "|" + child.position.z);
+			writer.WriteLine(child.eulerAngles.x + "|" + child.eulerAngles.y + "|" + child.eulerAngles.z);
+        }
+
+		writer.Close();
+		AssetDatabase.ImportAsset(path); 
+	}
+
+	void LoadFromDisk() {
+        string path = levelPath + levelName + ".txt";
+		string line;
+		int counter = 0;
+		GameObject go = null;
+
+        StreamReader reader = new StreamReader(path); 
+
+		while ((line = reader.ReadLine()) != null) {  
+			switch (counter) {
+				case 0:
+					GameObject prefab = Resources.Load(line) as GameObject;
+					go = PrefabUtility.InstantiatePrefab(prefab as GameObject) as GameObject;
+					go.transform.parent = GetLevelObject().transform;
+					counter++;
+					break;
+				case 1:
+        			string[] p = line.Split('|'); 
+					go.transform.position = new Vector3(Utils.StringToInt(p[0]), Utils.StringToInt(p[1]), Utils.StringToInt(p[2]));
+					counter++;
+					break;
+				case 2:
+        			string[] r = line.Split('|'); 
+					go.transform.eulerAngles = new Vector3(Utils.StringToInt(r[0]), Utils.StringToInt(r[1]), Utils.StringToInt(r[2]));
+					counter = 0;
+					break;
+			}
+		}  
+
+        reader.Close();
 	}
 
 	void OnEnable() {
@@ -115,7 +194,10 @@ public class LevelEditor : EditorWindow {
 	void Refresh() {
 		isHoldingAlt = false;
 		mouseButtonDown = false;
-        FindObjectOfType<Game>().EditorRefresh();
+		Game game = FindObjectOfType<Game>();
+		if (game != null) {
+        	game.EditorRefresh();
+		}
 	}
 
 	public void SceneGUI(SceneView sceneView) {

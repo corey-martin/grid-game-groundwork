@@ -4,10 +4,18 @@ using UnityEngine.SceneManagement;
 
 public class Utils
 {
-	IEnumerator LoadScene(string scene) {
+	public static IEnumerator LoadScene(string scene) {
 		yield return WaitFor.EndOfFrame;
 		SceneManager.LoadScene(scene, LoadSceneMode.Single);
 	}
+
+    public static int StringToInt(string intString) {
+        int i = 0;
+        if (!System.Int32.TryParse(intString, out i)) {
+            i = 0;
+        }
+        return i;
+    }
 
     public static void AvoidIntersect(Transform t) {
 		foreach (Transform child in t) {
