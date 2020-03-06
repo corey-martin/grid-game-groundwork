@@ -5,6 +5,8 @@ Made with Unity 2018.x LTS
 
 ![Example GIF](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/ggg-demo.gif)\
 
+![Level Editor](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/leveleditor.png)\
+
 ## Dependencies:
 DOTween by Demigiant  
 http://dotween.demigiant.com/  

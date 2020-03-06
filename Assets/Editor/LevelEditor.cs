@@ -52,7 +52,7 @@ public class LevelEditor : EditorWindow {
 		GUILayout.Label ("Selected GameObject:", EditorStyles.boldLabel);
         selGridInt = GUILayout.SelectionGrid(selGridInt, selectStrings, 3, GUILayout.Width(370));
 
-		GUILayout.Label ("GameObject Rotation (Z):", EditorStyles.boldLabel);
+		GUILayout.Label ("GameObject Rotation:", EditorStyles.boldLabel);
         rotateInt = GUILayout.SelectionGrid(rotateInt, rotateStrings, 4, GUILayout.Width(330));
 
 		EditorGUILayout.Space();
