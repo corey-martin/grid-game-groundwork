@@ -18,6 +18,7 @@ public class LevelEditor : EditorWindow {
     int spawnHeight = 0;
 	string levelName;
 	string levelPath = "Assets/Resources/Levels/";
+	bool overwriteLevel = false;
                         
     public GameObject[] prefabs;
 
@@ -103,6 +104,8 @@ public class LevelEditor : EditorWindow {
 
         levelName = EditorGUILayout.TextField("Level Name:", levelName);
 
+        overwriteLevel = EditorGUILayout.Toggle("Overwrite Level on Load:", overwriteLevel);
+		
         if (GUILayout.Button("Save To Disk", GUILayout.Width(150))) {
 			
         	string path = "Assets/Resources/Levels/" + levelName + ".txt";
@@ -145,7 +148,26 @@ public class LevelEditor : EditorWindow {
 	}
 
 	void LoadFromDisk() {
+
         string path = levelPath + levelName + ".txt";
+		
+		if (!File.Exists(path)) {
+			Debug.LogError("No level data found at " + path);
+			return;
+		}
+
+		if (overwriteLevel) {
+			Transform level = GetLevelObject().transform;
+			bool foundChild = true;
+			while (foundChild) {
+				foundChild = false;
+				foreach (Transform child in level) {
+					foundChild = true;
+					Undo.DestroyObjectImmediate(child.gameObject);
+				}
+			}
+		}
+
 		string line;
 		int counter = 0;
 		GameObject go = null;
@@ -158,6 +180,7 @@ public class LevelEditor : EditorWindow {
 					GameObject prefab = Resources.Load(line) as GameObject;
 					go = PrefabUtility.InstantiatePrefab(prefab as GameObject) as GameObject;
 					go.transform.parent = GetLevelObject().transform;
+        			Undo.RegisterCreatedObjectUndo (go, "Create object");
 					counter++;
 					break;
 				case 1:
@@ -316,12 +339,18 @@ public class LevelEditor : EditorWindow {
       
     void ClearObjectsAtPosition(Vector3Int pos) {
 		Transform level = GetLevelObject().transform;
-        foreach (Transform child in level) {
-            Vector3Int childPos = Vector3Int.RoundToInt(child.position);
-            if (childPos.x == pos.x && childPos.y == pos.y) {
-                Undo.DestroyObjectImmediate(child.gameObject);
-            }
-        }
+
+		bool foundChild = true;
+		while (foundChild) {
+			foundChild = false;
+			foreach (Transform child in level) {
+				Vector3Int childPos = Vector3Int.RoundToInt(child.position);
+				if (childPos.x == pos.x && childPos.y == pos.y) {
+					foundChild = true;
+					Undo.DestroyObjectImmediate(child.gameObject);
+				}
+			}
+		}
     }
 
     GameObject GetLevelObject() {
