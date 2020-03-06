@@ -13,6 +13,8 @@ public class LevelEditor : EditorWindow {
     string[] rotateStrings = new string[] {
     	"0", "90", "180", "270"    
 	};    
+	
+    int spawnHeight = 0;
                         
     public GameObject[] prefabs;
 
@@ -55,6 +57,13 @@ public class LevelEditor : EditorWindow {
 
 		EditorGUILayout.Space();
 
+		///////////////// SPAWN //////////////////
+
+        spawnHeight = EditorGUILayout.IntField("Spawn at height:", spawnHeight);
+
+		EditorGUILayout.Space();
+		EditorGUILayout.Space();
+
 		///////////////// ROTATION //////////////////
 
 		GUILayout.Label ("Rotate Level:", EditorStyles.boldLabel);
@@ -84,10 +93,8 @@ public class LevelEditor : EditorWindow {
         	InvertLevel("y");
         }
         EditorGUILayout.EndHorizontal();
-
 		EditorGUILayout.Space();
 		EditorGUILayout.Space();
-
 	}
 
 	void OnEnable() {
@@ -195,6 +202,9 @@ public class LevelEditor : EditorWindow {
 			}
 
 			go.transform.eulerAngles = new Vector3(0,0,z);
+
+			Vector3 p = go.transform.position;
+			go.transform.position = new Vector3(p.x, p.y, -Mathf.Abs(spawnHeight));
 			
 			Utils.AvoidIntersect(go.transform);
         	Undo.RegisterCreatedObjectUndo (go, "Create object");
