@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 public class LevelEditor : EditorWindow {
      
@@ -345,10 +346,18 @@ public class LevelEditor : EditorWindow {
 			foundChild = false;
 			foreach (Transform child in level) {
 				Vector3Int childPos = Vector3Int.RoundToInt(child.position);
-				if (childPos.x == pos.x && childPos.y == pos.y) {
-					foundChild = true;
-					Undo.DestroyObjectImmediate(child.gameObject);
-				}
+                if (childPos.x == pos.x && childPos.y == pos.y) {
+                    foundChild = true;
+                    Undo.DestroyObjectImmediate(child.gameObject);
+                }
+                else {
+                    var m = child.gameObject.GetComponent<Mover>();
+                    if (m != null && m.tiles.Any(t => t.pos.x == pos.x && t.pos.y == pos.y))
+                    {
+                        foundChild = true;
+                        Undo.DestroyObjectImmediate(child.gameObject);
+                    }
+                }
 			}
 		}
     }
