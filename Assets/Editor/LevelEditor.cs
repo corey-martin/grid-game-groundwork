@@ -212,12 +212,12 @@ public class LevelEditor : EditorWindow {
     }
        
 	void OnValidate() {
+		isHoldingAlt = false;
+		mouseButtonDown = false;
 		Refresh();
 	}
 	
 	void Refresh() {
-		isHoldingAlt = false;
-		mouseButtonDown = false;
 		Game game = FindObjectOfType<Game>();
 		if (game != null) {
         	game.EditorRefresh();
