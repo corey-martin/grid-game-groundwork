@@ -3,7 +3,7 @@
 A Unity project & level editor for making grid-based/block-pushing/Sokoban-like games.  
 Made with Unity 2019.x LTS  
 
-![Example GIF](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/ggg-demo.gif)\
+![Example GIF](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/ggg-demo.gif)
 
 ## Dependencies:
 DOTween by Demigiant  
