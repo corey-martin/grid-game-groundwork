@@ -1,11 +1,9 @@
 # Grid Game Groundwork for Unity
 
 A Unity project & level editor for making grid-based/block-pushing/Sokoban-like games.  
-Made with Unity 2018.x LTS  
+Made with Unity 2019.x LTS  
 
 ![Example GIF](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/ggg-demo.gif)\
-
-![Level Editor](https://raw.githubusercontent.com/mytoboggan/grid-game-groundwork/master/leveleditor.png)\
 
 ## Dependencies:
 DOTween by Demigiant  
@@ -18,18 +16,18 @@ See "Example.unity"
 
 ## Using the Editor:
 The editor window can be found under "Window" -> "Level Editor".
-- Assign any number of prefabs to the "Prefabs" dropdown (then collapse it when done)
-- After selecting a game object (prefab), set the "Scene" view to "2D"
+- Define the list of prefabs at `Assets/leveleditorprefabs.txt`, or assign prefabs manually to the "Prefabs" dropdown
+- Select a game object (prefab)
 - Left-click anywhere in the scene to paint in the selected gameObject
 - Hold left-click to paint continuously 
 
-_Note: Selecting "Empty" will clear any objects at that position._
+_Note: Selecting "Erase" will clear any objects at that position._
 
 ## Deeper Dive:
 
 The project assumes plenty about what kind of game you want to make, but there are no rules about friction or win conditions. There are two main object types that you can use in scenes, Wall and Mover.
 
-I typically make objects derive from the Mover class (as the Player class does). Walls and Movers both need child gameObjects (empty ones or not) tagged with "Tile" which will make up and define its shape. See the prefabs "Crate" and "Crate L" for examples of single-tile and multi-tile Movers.
+I typically make objects derive from the Mover class (as the Player class does). Walls and Movers both need child gameObjects with a Box Collider component and tagged with "Tile". See the prefabs "Crate" and "Crate L" under `Assets/Resources` for examples of single-tile and multi-tile Movers.
 
 ## Class Breakdown:
 

@@ -10,13 +10,11 @@ public class Game : MonoBehaviour {
 	public static Game Get() { return instance; }
 
 	public static Mover[] movers;
+	public static Wall[] walls;
 	public static List<Mover> moversToMove = new List<Mover>();
 
 	public float moveTime = 0.18f; // time it takes to move 1 unit
 	public float fallTime = 0.1f; // time it takes to fall 1 unit
-
-	public static Dictionary<Vector3Int, Mover> moveDict = new Dictionary<Vector3Int, Mover>();
-	public static Dictionary<Vector3Int, Wall> wallDict = new Dictionary<Vector3Int, Wall>();
 
 	public static bool isMoving = false;
 	public int movingCount = 0;
@@ -24,8 +22,6 @@ public class Game : MonoBehaviour {
 
 	void Awake() {
 		instance = this;
-		moveDict.Clear();
-		wallDict.Clear();
 
 		if (Application.isEditor && !SaveData.initialized) {
 			SaveData.LoadGame(1);
@@ -44,12 +40,7 @@ public class Game : MonoBehaviour {
 
 	public void EditorRefresh() {
 		movers = FindObjectsOfType<Mover>();
-		wallDict.Clear();
-		Wall[] walls = FindObjectsOfType<Wall>();
-		foreach (Wall wall in walls) {
-			wall.Init();
-		}
-		UpdateMovers();
+		walls = FindObjectsOfType<Wall>();
 	}
 
 	void Update() {
@@ -73,7 +64,6 @@ public class Game : MonoBehaviour {
 
 	public void Refresh() {
 		isMoving = false;
-		UpdateMovers();
 		moversToMove.Clear();
 		movingCount = 0;
 	}
@@ -126,7 +116,6 @@ public class Game : MonoBehaviour {
 	
 	public void FallStart() {
 		isMoving = true;
-		UpdateMovers();
 		movers = movers.OrderBy((c) => -c.transform.position.z).ToArray();
 
 		foreach (Mover m in movers) {
@@ -141,14 +130,6 @@ public class Game : MonoBehaviour {
 		if (movingCount == 0) {
 			Refresh();
 			CompleteMove();
-		}
-	}
-
-	void UpdateMovers() {
-		moveDict.Clear();
-		foreach (Mover m in movers) {
-			m.Reset();
-			m.StoreTileData();
 		}
 	}
 }

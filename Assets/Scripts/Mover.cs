@@ -2,70 +2,26 @@
 using System.Collections;
 using UnityEngine;
 using DG.Tweening;
-using System.Linq;
-
-[System.Serializable]
-public class Tile {
-	public Transform transform;
-	public Vector3Int pos;
-	public Vector3Int rot;
-}
 
 public class Mover : MonoBehaviour {
 
 	[HideInInspector] public Vector3 goalPosition;
 	public List<Tile> tiles = new List<Tile>();
 	[HideInInspector] public bool isFalling = false;
-	
-	List<Vector3Int> keysToRemove = new List<Vector3Int>();
 
-	public void Start() {
-        Init();
-	}
-
-    void OnValidate() {
-        Init();
-    }
-
-    void Init() {
+	void Start() {
 		CreateTiles();
-		AddToDict();
-    }
+	}
 
 	void CreateTiles() {
         tiles.Clear();
 		foreach (Transform child in transform) {
 			if (child.gameObject.CompareTag("Tile")) {
 				Tile tile = new Tile();
-				tile.transform = child;
-				tile.pos = Vector3Int.RoundToInt(child.position);
-				tile.rot = Vector3Int.RoundToInt(child.eulerAngles);
+				tile.t = child;
 				tiles.Add(tile);
 			}
 		}
-	}
-
-	void AddToDict() {
-        foreach (Tile tile in tiles) {
-            if (!Game.moveDict.ContainsKey(tile.pos)) {
-            	Game.moveDict.Add(tile.pos, this);
-            }
-        }
-	}
-
-	void RemoveFromDict() {
-		foreach(var item in Game.moveDict.Where(kvp => kvp.Value == this).ToList()) {
-			Game.moveDict.Remove(item.Key);
-		}
-	}
-
-	public void StoreTileData() {
-		RemoveFromDict();
-		foreach (Tile tile in tiles) {
-			tile.pos = Vector3Int.RoundToInt(tile.transform.position);
-			tile.rot = Vector3Int.RoundToInt(tile.transform.eulerAngles);
-		}
-		AddToDict();
 	}
 
     public void Reset() {
@@ -125,7 +81,6 @@ public class Mover : MonoBehaviour {
 
 	IEnumerator DoFallAgain() {
 		yield return WaitFor.EndOfFrame;
-        StoreTileData();
 		FallStart();
 	}
 
@@ -139,6 +94,9 @@ public class Mover : MonoBehaviour {
 
     public bool GroundBelow() {
 		foreach (Tile tile in tiles) {
+			if (Utils.Roughly(tile.pos.z, 0)) {
+				return true;
+			}
 			if (GroundBelowTile(tile)) {
 				return true;
 			}
@@ -160,7 +118,6 @@ public class Mover : MonoBehaviour {
 
     void OnDrawGizmosSelected() {
         if (!Application.isPlaying) {
-            tiles.Clear();
             CreateTiles();
         }
         Gizmos.color = Color.blue;

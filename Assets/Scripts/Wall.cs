@@ -4,49 +4,28 @@ using UnityEngine;
 public class Wall : MonoBehaviour
 {
     public bool isStatic = true;
-    public List<Vector3Int> tiles = new List<Vector3Int>();
-
-    public List<Vector3Int> GetTiles() {
-        if (!isStatic) {
-            tiles.Clear();
-            GenerateTiles();
-        }
-        return tiles;
-    }
-
-    void Start() {
-        Init();
-    }
+    public List<Transform> tiles = new List<Transform>();
 
     void OnValidate() {
-        Init();
+        CreateTiles();
     }
 
-    public void Init() {
-        GenerateTiles();
-        foreach (Vector3Int tile in tiles) {
-            if (!Game.wallDict.ContainsKey(tile)) {
-                Game.wallDict.Add(tile, this);
-            }
-        }
-    }
-
-    void GenerateTiles() {
+    void CreateTiles() {
         tiles.Clear();
 		foreach (Transform child in transform) {
 			if (child.gameObject.CompareTag("Tile")) {
-                tiles.Add(Vector3Int.RoundToInt(child.position));
+                tiles.Add(child);
 			}
 		}
     }
 
     void OnDrawGizmosSelected() {
         if (!Application.isPlaying) {
-            GenerateTiles();
+            CreateTiles();
         }
         Gizmos.color = Color.yellow;
-        foreach (Vector3Int tile in tiles) {    
-            Gizmos.DrawWireCube(tile, Vector3.one);
+        foreach (Transform tile in tiles) {    
+            Gizmos.DrawWireCube(tile.position, tile.localScale);
         }
     }
 }
