@@ -242,7 +242,11 @@ public class LevelEditor : EditorWindow {
 		EditorGUILayout.BeginHorizontal();
 
 		if (string.IsNullOrEmpty(newLevelName)) {
-			GUILayout.Label ("To create a new level, give it a name: ");
+			if (GameObject.FindGameObjectWithTag("Level") == null) {
+				GUILayout.Label ("To create a new level, give it a name: ");
+			} else {
+				newLevelName = level.name;
+			}
 		}
 		
         if (!string.IsNullOrEmpty(newLevelName) && GUILayout.Button("Save Level As", GUILayout.Width(150))) {
