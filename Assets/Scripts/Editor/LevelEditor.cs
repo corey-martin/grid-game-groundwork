@@ -46,17 +46,24 @@ public class LevelEditor : EditorWindow {
 
     GameObject level {
 		get {
-			GameObject level = GameObject.Find(currentLevel);
-			if (level == null) {
-				level = new GameObject();
-				level.transform.name = currentLevel;
-				level.tag = "Level";
-				level.transform.SetParent(GameObject.Find("Levels").transform);
-        		Undo.RegisterCreatedObjectUndo (level, "Create object");
-			}
-			return level;
+			GameObject l = FindOrCreate(currentLevel, FindOrCreate("Levels").transform);
+			l.tag = "Level";
+			return l;
 		}
     }
+
+	GameObject FindOrCreate(string s, Transform parentObj = null) {
+		GameObject go = GameObject.Find(s);
+		if (go == null) {
+			go = new GameObject();
+			go.transform.name = s;
+			if (parentObj != null) {
+				go.transform.SetParent(parentObj);
+			}
+        	Undo.RegisterCreatedObjectUndo (go, "Create object");
+		}
+		return go;
+	}
 
 	List<string> sceneLevels = new List<string>();
 
