@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Tile
   - Level
+  - Target
   layers:
   - Default
   - TransparentFX

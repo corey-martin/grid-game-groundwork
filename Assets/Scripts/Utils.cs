@@ -86,18 +86,29 @@ public class Utils
 		return WallIsAtPos(pos) == false && MoverIsAtPos(pos) == false; 
 	}
 
+	public static Collider[] GetCollidersAt(Vector3 pos) {
+		return GetCollidersAt(Vec3ToInt(pos));
+	}
+
+	public static Collider[] GetCollidersAt(Vector3Int pos) {
+		Collider[] colliders = new Collider[maxColliders];
+        int numColliders = Physics.OverlapSphereNonAlloc(pos, 0.4f, colliders);
+		System.Array.Resize(ref colliders, numColliders);
+		return colliders;
+	}
+
 	// WALLS // 
 
 	public static Wall GetWallAtPos(Vector3Int pos) {
-		Collider[] colliders = new Collider[maxColliders];
-        int numColliders = Physics.OverlapSphereNonAlloc(pos, 0.4f, colliders);
-
-        for (int i = 0; i < numColliders; i++) {
+		Collider[] colliders = GetCollidersAt(pos);
+		
+		for (int i = 0; i < colliders.Length; i++) {
 			Wall wall = colliders[i].GetComponentInParent<Wall>();
 			if (wall != null) {
 				return wall;
 			}
-        }
+		}
+
 		return null;
 	}
 
@@ -120,10 +131,9 @@ public class Utils
 	}
 
 	public static Mover GetMoverAtPos(Vector3Int pos) {
-		Collider[] colliders = new Collider[maxColliders];
-        int numColliders = Physics.OverlapSphereNonAlloc(pos, 0.4f, colliders);
+		Collider[] colliders = GetCollidersAt(pos);
 
-        for (int i = 0; i < numColliders; i++) {
+        for (int i = 0; i < colliders.Length; i++) {
 			Mover m = colliders[i].GetComponentInParent<Mover>();
 			if (m != null) { 
 				return m;

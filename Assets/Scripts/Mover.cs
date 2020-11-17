@@ -8,6 +8,7 @@ public class Mover : MonoBehaviour {
 	[HideInInspector] public Vector3 goalPosition;
 	public List<Tile> tiles = new List<Tile>();
 	[HideInInspector] public bool isFalling = false;
+	public bool isPlayer { get { return CompareTag("Player"); }}
 
 	void Start() {
 		CreateTiles();
@@ -37,6 +38,9 @@ public class Mover : MonoBehaviour {
 			}
 			Mover m = Utils.GetMoverAtPos(posToCheck);
 			if (m != null && m != this) {
+				if (!isPlayer && !Game.isPolyban) {
+					return false;
+				}
 				if (m.CanMove(dir)) {
 					m.MoveIt(dir);
 				} else {

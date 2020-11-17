@@ -6,6 +6,12 @@ using DG.Tweening;
 
 public class Game : MonoBehaviour {
 
+	
+	public delegate void GameEvent();
+	public static GameEvent onUndo;
+	public static GameEvent onReset;
+	public static GameEvent onMoveComplete;
+
 	public static Game instance;
 	public static Game Get() { return instance; }
 
@@ -19,6 +25,7 @@ public class Game : MonoBehaviour {
 	public static bool isMoving = false;
 	public int movingCount = 0;
 	public bool holdingUndo = false;
+	public static bool isPolyban = true;
 
 	void Awake() {
 		instance = this;
@@ -50,16 +57,11 @@ public class Game : MonoBehaviour {
 			DOVirtual.DelayedCall(0.75f, UndoRepeat);
 			
 		} else if (Input.GetKeyDown(KeyCode.R)) {
-			Reset();
+			DoReset();
 		}
 		if (Input.GetKeyUp(KeyCode.Z)) {
 			StartCoroutine(StopUndoing());
 		}
-	}
-
-	IEnumerator StopUndoing() {
-		yield return WaitFor.EndOfFrame;
-		holdingUndo = false;
 	}
 
 	public void Refresh() {
@@ -68,17 +70,17 @@ public class Game : MonoBehaviour {
 		movingCount = 0;
 	}
 
-    void Reset() {
+	/////////////////////////////////////////////////////////////////// UNDO / RESET
+
+    void DoReset() {
 		DOTween.KillAll();
 		isMoving = false;
 		State.DoReset();
 		Refresh();
+		if (onReset != null) {
+			onReset();
+		}
     }
-
-	public void CompleteMove() {
-		State.OnMoveComplete();
-		moversToMove.Clear();
-	}
 
 	void DoUndo() {
 		if (State.undoIndex > 0) {
@@ -89,6 +91,9 @@ public class Game : MonoBehaviour {
 			isMoving = false;
 			State.DoUndo();
 			Refresh();
+			if (onUndo != null) {
+				onUndo();
+			}
 		}
 	}
 
@@ -98,6 +103,13 @@ public class Game : MonoBehaviour {
 			DOVirtual.DelayedCall(0.075f, UndoRepeat);
 		}
 	}
+
+	IEnumerator StopUndoing() {
+		yield return WaitFor.EndOfFrame;
+		holdingUndo = false;
+	}
+
+	/////////////////////////////////////////////////////////////////// MOVE
 
 	public void MoveStart(Vector3 dir) {
 		isMoving = true;
@@ -130,6 +142,13 @@ public class Game : MonoBehaviour {
 		if (movingCount == 0) {
 			Refresh();
 			CompleteMove();
+		}
+	}
+
+	public void CompleteMove() {
+		State.OnMoveComplete();
+		if (onMoveComplete != null) {
+			onMoveComplete();
 		}
 	}
 }
