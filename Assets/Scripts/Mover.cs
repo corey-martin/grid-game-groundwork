@@ -29,7 +29,7 @@ public class Mover : MonoBehaviour {
         isFalling = false;
     }
 
-	public bool CanMove(Vector3 dir) {
+	public virtual bool CanMove(Vector3 dir) {
 
 		foreach (Tile tile in tiles) {
 			Vector3Int posToCheck = Vector3Int.RoundToInt(tile.pos + dir);
