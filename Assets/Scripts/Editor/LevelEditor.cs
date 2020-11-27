@@ -72,6 +72,50 @@ public class LevelEditor : EditorWindow {
 		EditorWindow.GetWindow(typeof(LevelEditor));
 	}
 
+	void OnEnable() {
+		SceneView.duringSceneGui += SceneGUI;
+        EditorApplication.playModeStateChanged += ChangedPlayModeState;
+    }
+
+    void ChangedPlayModeState(PlayModeStateChange state) {
+		switch (state) {
+			case PlayModeStateChange.EnteredPlayMode:
+				playModeActive = true;
+				break;
+			case PlayModeStateChange.EnteredEditMode:
+				playModeActive = false;
+				GetPlayModeJobs();
+				break;
+		}
+    }
+       
+	void OnValidate() {
+		EnsureTagsExist();
+ 		Reset();
+		Refresh();
+	}
+
+	void Reset() {
+		mouseButtonDown = false;
+		CreateGizmoObject();
+	}
+	
+	void Refresh() {
+		Game game = FindObjectOfType<Game>();
+		if (game != null) {
+        	game.EditorRefresh();
+		}
+		RefreshSceneLevels();
+		RefreshSavedLevels();
+	}
+
+	void CreateGizmoObject() {
+		LevelGizmo levelGizmo = FindObjectOfType<LevelGizmo>();
+		if (levelGizmo == null) {
+  			new GameObject("LevelGizmo").AddComponent<LevelGizmo>();
+		}
+	}
+
 	void PopulateList() {
         if (prefabs.Length == 0 && File.Exists(textFilePath)) {
 			List<GameObject> newPrefabs = new List<GameObject>();
@@ -100,6 +144,11 @@ public class LevelEditor : EditorWindow {
 		foreach (GameObject l in levels) {
 			sceneLevels.Add(l.name);
 		}
+	}
+
+	void EnsureTagsExist() {
+		TagHelper.AddTag("Level");
+		TagHelper.AddTag("Tile");
 	}
 	
 	void OnGUI() {
@@ -399,49 +448,6 @@ public class LevelEditor : EditorWindow {
 		newLevelName = levelName;
 		isLoading = false;
 		isDirty = false;
-	}
-
-	void OnEnable() {
-		SceneView.duringSceneGui += SceneGUI;
-        EditorApplication.playModeStateChanged += ChangedPlayModeState;
-    }
-
-    void ChangedPlayModeState(PlayModeStateChange state) {
-		switch (state) {
-			case PlayModeStateChange.EnteredPlayMode:
-				playModeActive = true;
-				break;
-			case PlayModeStateChange.EnteredEditMode:
-				playModeActive = false;
-				GetPlayModeJobs();
-				break;
-		}
-    }
-       
-	void OnValidate() {
- 		Reset();
-		Refresh();
-	}
-
-	void Reset() {
-		mouseButtonDown = false;
-		CreateGizmoObject();
-	}
-	
-	void Refresh() {
-		Game game = FindObjectOfType<Game>();
-		if (game != null) {
-        	game.EditorRefresh();
-		}
-		RefreshSceneLevels();
-		RefreshSavedLevels();
-	}
-
-	void CreateGizmoObject() {
-		LevelGizmo levelGizmo = FindObjectOfType<LevelGizmo>();
-		if (levelGizmo == null) {
-  			new GameObject("LevelGizmo").AddComponent<LevelGizmo>();
-		}
 	}
 
 	void Update() {
