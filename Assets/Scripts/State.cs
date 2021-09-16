@@ -54,6 +54,7 @@ public class State
 		if (undoIndex > 0) {
             undoIndex--;
             RemoveFromUndoStack();
+			PositionBuffer.Update();
 		}
 	}
 
@@ -63,5 +64,6 @@ public class State
 		    m.mover.transform.eulerAngles = m.initialRot;
         }
 		OnMoveComplete();
+        PositionBuffer.Update();
 	}
 }
