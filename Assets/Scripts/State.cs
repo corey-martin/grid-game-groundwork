@@ -39,6 +39,7 @@ public class State
 	public static void RemoveFromUndoStack() {
         foreach (MoverToTrack m in moversToTrack) {
             m.positions.RemoveAt(m.positions.Count - 1);
+            m.rotations.RemoveAt(m.rotations.Count - 1);
             m.mover.transform.position = m.positions[m.positions.Count - 1];
             m.mover.transform.eulerAngles = m.rotations[m.rotations.Count - 1];
         }
