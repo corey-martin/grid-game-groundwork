@@ -55,6 +55,10 @@ public class State
             undoIndex--;
             RemoveFromUndoStack();
 			PositionBuffer.Update();
+            foreach (var item in Game.movers)
+            {
+                item.isFalling = false;
+            }
 		}
 	}
 
@@ -65,5 +69,9 @@ public class State
         }
 		OnMoveComplete();
         PositionBuffer.Update();
+        foreach (var item in Game.movers)
+        {
+            item.isFalling = false;
+        }
 	}
 }
