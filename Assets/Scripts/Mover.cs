@@ -33,10 +33,10 @@ public class Mover : MonoBehaviour {
 
 		foreach (Tile tile in tiles) {
 			Vector3Int posToCheck = Vector3Int.RoundToInt(tile.pos + dir);
-			if (Utils.WallIsAtPos(posToCheck)) {
+			if (PositionBuffer.WallIsAtPos(posToCheck)) {
 				return false;
 			}
-			Mover m = Utils.GetMoverAtPos(posToCheck);
+			Mover m = PositionBuffer.GetMoverAtPos(posToCheck);
 			if (m != null && m != this) {
 				if (!isPlayer && !Game.isPolyban) {
 					return false;
@@ -110,10 +110,10 @@ public class Mover : MonoBehaviour {
 
 	bool GroundBelowTile(Tile tile) {
 		Vector3Int posToCheck = Vector3Int.RoundToInt(tile.pos + Vector3.forward);
-		if (Utils.WallIsAtPos(posToCheck)) {
+		if (PositionBuffer.WallIsAtPos(posToCheck)) {
 			return true;
 		}
-		Mover m = Utils.GetMoverAtPos(posToCheck);
+		Mover m = PositionBuffer.GetMoverAtPos(posToCheck);
 		if (m != null && m != this && !m.isFalling) {
 			return true;
 		}

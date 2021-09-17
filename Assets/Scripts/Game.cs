@@ -123,6 +123,7 @@ public class Game : MonoBehaviour {
 	public void MoveEnd() {
 		movingCount--;
 		if (movingCount == 0) {
+			PositionBuffer.Update();
 			FallStart();
 		}
 	}
@@ -141,6 +142,7 @@ public class Game : MonoBehaviour {
 
 	public void FallEnd() {
 		if (movingCount == 0) {
+			PositionBuffer.Update();
 			Refresh();
 			CompleteMove();
 		}
