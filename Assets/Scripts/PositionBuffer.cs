@@ -5,8 +5,6 @@ using UnityEngine;
 public class PositionBuffer
 {
     private static Dictionary<Vector3Int, List<GameObject>> gameObjects;
-    public static int size = 300;
-    public static int stackSize = 5;
 
     public static Dictionary<Vector3Int, List<GameObject>> GameObjects { get {
         if(gameObjects == null)Update();
