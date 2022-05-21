@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 
 public class Sokoban : MonoBehaviour
 {
@@ -25,24 +26,15 @@ public class Sokoban : MonoBehaviour
         winText.SetActive(won);
     }
 
-    bool won {
-        get {
-            foreach (Mover m in Game.movers) {
-                if (m.isPlayer) continue;
-                bool onTarget = false;
-                foreach (Tile t in m.tiles) {
-                    Collider[] colliders = Utils.GetCollidersAt(t.pos);
-                    foreach (Collider col in colliders) {
-                        if (col.transform.CompareTag("Target")) {
-                            onTarget = true;
-                        }
-                    }
-                }
-                if (!onTarget) {
-                    return false;
-                }
-            }
-            return true;
+    private static bool won {
+        get
+        {
+            return Game.movers.All(m => m.isPlayer || MoverOnTarget(m));
         }
+    }
+
+    private static bool MoverOnTarget(Mover m)
+    {
+        return m.tiles.Any(t => Utils.TaggedObjIsAtPos(t.pos, "Target"));
     }
 }
