@@ -4,7 +4,7 @@ public class Player : Mover {
 
 	public static Player instance;
 	public static Player Get() { return instance; }
-	Vector3 direction = Vector3.zero;
+	Vector3Int direction = Vector3Int.zero;
 
 	void Awake() {
 		instance = this;
@@ -30,7 +30,7 @@ public class Player : Mover {
 		}
 
 		if (hor != 0 && ver != 0) {
-			if (direction == Vector3.right || direction == Vector3.left) {
+			if (direction == Vector3Int.right || direction == Vector3Int.left) {
 				hor = 0;
 			} else {
 				ver = 0;
@@ -38,20 +38,16 @@ public class Player : Mover {
 		}
 
 		if (hor == 1) {
-			direction = Vector3.right;
+			direction = Vector3Int.right;
 		} else if (hor == -1) { 
-			direction = Vector3.left;
+			direction = Vector3Int.left;
 		} else if (ver == -1) {
-			direction = Vector3.down;
+			direction = Vector3Int.down;
 		} else if (ver == 1) {
-			direction = Vector3.up;
+			direction = Vector3Int.up;
 		}
 
-		if (CanMove(direction)) {
-			MoveIt(direction);
-			Game.Get().MoveStart(direction);
-		} else {
-			Game.moversToMove.Clear();
-		}
+		if (TryPlanMove(direction))
+			Game.Get().MoveStart();
 	}
 }

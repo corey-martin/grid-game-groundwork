@@ -2,7 +2,7 @@
 
 public class OutletEnd : Pipe
 {
-	public override bool CanMove(Vector3 dir) {
+	public override bool CanMoveToward(Vector3Int dir) {
         return false;
     }
 }
