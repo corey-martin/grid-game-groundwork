@@ -17,7 +17,7 @@ public class Player : Mover {
 	}
 
 	public bool CanInput() {
-		return !Game.isMoving && !Game.Get().holdingUndo;
+		return !Game.Get().isMoving && !Game.Get().holdingUndo;
 	}
 
 	public void CheckInput() {

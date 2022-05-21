@@ -22,7 +22,6 @@ public class Game : MonoBehaviour {
 	public float moveTime = 0.18f; // time it takes to move 1 unit
 	public float fallTime = 0.1f; // time it takes to fall 1 unit
 
-	public static bool isMoving = false;
 	public int movingCount = 0;
 	public bool holdingUndo = false;
 	public static bool isPolyban = true;
@@ -43,7 +42,6 @@ public class Game : MonoBehaviour {
 			State.AddMover(mover);
 		}
 		State.AddToUndoStack();
-		isMoving = false;
 	}
 
 	public void EditorRefresh() {
@@ -66,16 +64,16 @@ public class Game : MonoBehaviour {
 	}
 
 	public void Refresh() {
-		isMoving = false;
 		moversToMove.Clear();
 		movingCount = 0;
 	}
+	
+	public bool isMoving { get { return movingCount > 0; } }
 
 	/////////////////////////////////////////////////////////////////// UNDO / RESET
 
     void DoReset() {
 		DOTween.KillAll();
-		isMoving = false;
 		State.DoReset();
 		Refresh();
 		if (onReset != null) {
@@ -89,7 +87,6 @@ public class Game : MonoBehaviour {
 			if (isMoving) {
 				CompleteMove();
 			}
-			isMoving = false;
 			State.DoUndo();
 			Refresh();
 			if (onUndo != null) {
@@ -113,7 +110,6 @@ public class Game : MonoBehaviour {
 	/////////////////////////////////////////////////////////////////// MOVE
 
 	public void MoveStart(Vector3 dir) {
-		isMoving = true;
 		foreach (Mover m in moversToMove) {
 			movingCount++;
 			m.transform.DOMove(m.goalPosition, moveTime).OnComplete(MoveEnd).SetEase(Ease.Linear);
@@ -129,7 +125,6 @@ public class Game : MonoBehaviour {
 	}
 	
 	public void FallStart() {
-		isMoving = true;
 		movers = movers.OrderBy((c) => -c.transform.position.z).ToArray();
 
 		foreach (Mover m in movers) {
