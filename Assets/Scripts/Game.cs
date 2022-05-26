@@ -178,7 +178,7 @@ public class Game : MonoBehaviour {
 			
 			// Check for follow-ups, like things starting or continuing to fall.
 			foreach (var mover in movers)
-				mover.FinalizeLogicalMove();
+				mover.DoPostMoveEffects();
 		}
 		
 		PlannedMoves.Add(GetMoverPositions());

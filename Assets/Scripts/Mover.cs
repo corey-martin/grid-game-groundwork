@@ -90,7 +90,7 @@ public class Mover : MonoBehaviour {
 
 	// Handle effects that happen after moving, such as
 	// planning to fall.
-	public void FinalizeLogicalMove()
+	public void DoPostMoveEffects()
 	{
 		if (ShouldFall())
 			PlanMove(Utils.forward);
