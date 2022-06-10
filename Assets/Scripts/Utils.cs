@@ -86,38 +86,50 @@ public class Utils
 		return WallIsAtPos(pos) == false && MoverIsAtPos(pos) == false; 
 	}
 
-	public static Collider[] GetCollidersAt(Vector3 pos) {
-		return GetCollidersAt(Vec3ToInt(pos));
+	private static HashSet<GameObject> GetTilesAt(Vector3Int pos)
+	{
+		return Game.instance.Grid.GetContentsAt(pos);
 	}
 
-	public static Collider[] GetCollidersAt(Vector3Int pos) {
-		Collider[] colliders = new Collider[maxColliders];
-        int numColliders = Physics.OverlapSphereNonAlloc(pos, 0.4f, colliders);
-		System.Array.Resize(ref colliders, numColliders);
-		return colliders;
+	private static T GetObjAtPos<T>(Vector3Int pos)
+	{
+		foreach (var tile in GetTilesAt(pos)) {
+			var o = tile.GetComponentInParent<T>();
+			if (o != null) { 
+				return o;
+			}
+		}
+
+		return default;
+	}
+
+	public static GameObject GetTaggedObjAtPos(Vector3Int pos, string tag)
+	{
+		foreach (var tile in GetTilesAt(pos))
+			if (tile.CompareTag(tag))
+				return tile;
+		return null;
+	}
+
+	public static bool TaggedObjIsAtPos(Vector3Int pos, string tag)
+	{
+		return GetTaggedObjAtPos(pos, tag) != null;
+	}
+
+	public static bool TaggedObjIsAtPos(Vector3 pos, string tag)
+	{
+		return GetTaggedObjAtPos(Vec3ToInt(pos), tag) != null;
 	}
 
 	// WALLS // 
 
-	public static Wall GetWallAtPos(Vector3Int pos) {
-		Collider[] colliders = GetCollidersAt(pos);
-		
-		for (int i = 0; i < colliders.Length; i++) {
-			Wall wall = colliders[i].GetComponentInParent<Wall>();
-			if (wall != null) {
-				return wall;
-			}
-		}
-
-		return null;
+	public static Wall GetWallAtPos(Vector3Int pos)
+	{
+		return GetObjAtPos<Wall>(pos);
 	}
 
 	public static Wall GetWallAtPos(Vector3 pos) {
 		return GetWallAtPos(Vec3ToInt(pos));
-	}
-
-	public static bool WallIsAtPos(Vector3 pos) {
-		return WallIsAtPos(Vec3ToInt(pos));
 	}
 
 	public static bool WallIsAtPos(Vector3Int pos) {
@@ -131,15 +143,7 @@ public class Utils
 	}
 
 	public static Mover GetMoverAtPos(Vector3Int pos) {
-		Collider[] colliders = GetCollidersAt(pos);
-
-        for (int i = 0; i < colliders.Length; i++) {
-			Mover m = colliders[i].GetComponentInParent<Mover>();
-			if (m != null) { 
-				return m;
-			}
-        }
-		return null;	
+		return GetObjAtPos<Mover>(pos);
 	}
 
 	public static bool MoverIsAtPos(Vector3 pos) {

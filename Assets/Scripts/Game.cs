@@ -15,6 +15,8 @@ public class Game : MonoBehaviour {
 	public static Game instance;
 	public static Game Get() { return instance; }
 
+	public LogicalGrid Grid = new LogicalGrid();
+
 	public static Mover[] movers;
 	public static Wall[] walls;
 	public static List<Mover> moversToMove = new List<Mover>();
@@ -33,6 +35,7 @@ public class Game : MonoBehaviour {
 
 		if (Application.isEditor && !SaveData.initialized) {
 			SaveData.LoadGame(1);
+			SyncGrid();
 		}
 	}
 
@@ -49,6 +52,7 @@ public class Game : MonoBehaviour {
 	public void EditorRefresh() {
 		movers = FindObjectsOfType<Mover>();
 		walls = FindObjectsOfType<Wall>();
+		SyncGrid();
 	}
 
 	void Update() {
@@ -69,6 +73,13 @@ public class Game : MonoBehaviour {
 		isMoving = false;
 		moversToMove.Clear();
 		movingCount = 0;
+		SyncGrid();
+	}
+
+	public void SyncGrid()
+	{
+		var tiles = GameObject.FindGameObjectsWithTag("Tile");
+		Grid.SyncContents(tiles);
 	}
 
 	/////////////////////////////////////////////////////////////////// UNDO / RESET
@@ -123,7 +134,7 @@ public class Game : MonoBehaviour {
 	public void MoveEnd() {
 		movingCount--;
 		if (movingCount == 0) {
-			PositionBuffer.Update();
+			SyncGrid();
 			FallStart();
 		}
 	}
@@ -142,7 +153,6 @@ public class Game : MonoBehaviour {
 
 	public void FallEnd() {
 		if (movingCount == 0) {
-			PositionBuffer.Update();
 			Refresh();
 			CompleteMove();
 		}

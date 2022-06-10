@@ -54,7 +54,6 @@ public class State
 		if (undoIndex > 0) {
             undoIndex--;
             RemoveFromUndoStack();
-			PositionBuffer.Update();
             foreach (var item in Game.movers)
             {
                 item.isFalling = false;
@@ -68,7 +67,6 @@ public class State
 		    m.mover.transform.eulerAngles = m.initialRot;
         }
 		OnMoveComplete();
-        PositionBuffer.Update();
         foreach (var item in Game.movers)
         {
             item.isFalling = false;
