@@ -133,8 +133,8 @@ public class LevelEditor : EditorWindow {
 	void RefreshSavedLevels() {
 		savedLevels.Clear();
 		DirectoryInfo d = new DirectoryInfo(levelPath);
-		foreach (var file in d.GetFiles("*.txt")) {
-			savedLevels.Add(file.Name.Replace(".txt", ""));
+		foreach (var file in d.GetFiles("*.json")) {
+			savedLevels.Add(file.Name.Replace(".json", ""));
 		}
 	}
 
@@ -376,15 +376,9 @@ public class LevelEditor : EditorWindow {
 			System.IO.Directory.CreateDirectory(levelPath);
 		}
 
-        string path = levelPath + levelName + ".txt";
+        string path = levelPath + levelName + ".json";
 		StreamWriter writer = new StreamWriter(path, false);
-
-        foreach (Transform child in level.transform) {
-			writer.WriteLine(child.name);
-			writer.WriteLine(child.localPosition.x + "|" + child.localPosition.y + "|" + child.localPosition.z);
-			writer.WriteLine(child.localEulerAngles.x + "|" + child.localEulerAngles.y + "|" + child.localEulerAngles.z);
-        }
-
+		writer.WriteLine(JsonUtility.ToJson(new SerializedLevel(level)));
 		writer.Close();
 		AssetDatabase.ImportAsset(path); 
 		RefreshSavedLevels();
@@ -405,7 +399,7 @@ public class LevelEditor : EditorWindow {
 			Undo.DestroyObjectImmediate(existingLevel);
 		}
 
-        string path = levelPath + levelName + ".txt";
+        string path = levelPath + levelName + ".json";
 		
 		if (!File.Exists(path)) {
 			Debug.LogError("No level data found at " + path);
@@ -414,36 +408,21 @@ public class LevelEditor : EditorWindow {
 
 		isLoading = true;
 
-		string line;
-		int counter = 0;
-		GameObject go = null;
-
         StreamReader reader = new StreamReader(path); 
-
-		while ((line = reader.ReadLine()) != null) {  
-			switch (counter) {
-				case 0:
-					GameObject prefab = Resources.Load(line) as GameObject;
-					go = PrefabUtility.InstantiatePrefab(prefab as GameObject) as GameObject;
-					go.transform.parent = level.transform;
-        			Undo.RegisterCreatedObjectUndo (go, "Create object");
-					counter++;
-					break;
-				case 1:
-        			string[] p = line.Split('|'); 
-					go.transform.localPosition = new Vector3(Utils.StringToInt(p[0]), Utils.StringToInt(p[1]), Utils.StringToInt(p[2]));
-					counter++;
-					break;
-				case 2:
-        			string[] r = line.Split('|'); 
-					go.transform.localEulerAngles = new Vector3(Utils.StringToInt(r[0]), Utils.StringToInt(r[1]), Utils.StringToInt(r[2]));
-					counter = 0;
-					break;
-			}
-		}  
+        SerializedLevel serializedLevel = JsonUtility.FromJson<SerializedLevel>(reader.ReadToEnd());
         reader.Close();
+        
+        foreach (var slo in serializedLevel.LevelObjects)
+        {
+	        GameObject prefab = Resources.Load(slo.prefab) as GameObject;
+	        var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+	        go.transform.parent = level.transform;
+	        go.transform.localPosition = slo.pos;
+	        go.transform.localEulerAngles = slo.angles;
+	        Undo.RegisterCreatedObjectUndo (go, "Create object");
+        }
 
-		RefreshSceneLevels();
+        RefreshSceneLevels();
 		level.transform.position = levelPosition;
 		newLevelName = levelName;
 		isLoading = false;
