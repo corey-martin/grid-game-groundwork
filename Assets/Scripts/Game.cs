@@ -19,12 +19,13 @@ public class Game : MonoBehaviour {
 
 	public static Mover[] movers;
 	public static Wall[] walls;
-	public static List<Mover> moversToMove = new List<Mover>();
 
 	public float moveTime = 0.18f; // time it takes to move 1 unit
 	public float fallTime = 0.1f; // time it takes to fall 1 unit
 
 	public int movingCount = 0;
+	private List<List<MoverPos>> PlannedMoves = new List<List<MoverPos>>();
+
 	public bool holdingUndo = false;
 	public static bool isPolyban = true;
 
@@ -68,8 +69,10 @@ public class Game : MonoBehaviour {
 	}
 
 	public void Refresh() {
-		moversToMove.Clear();
 		movingCount = 0;
+		PlannedMoves.Clear();
+		foreach (var mover in movers)
+			mover.Stop();
 		SyncGrid();
 	}
 
@@ -92,17 +95,19 @@ public class Game : MonoBehaviour {
 		}
     }
 
-	void DoUndo() {
-		if (State.undoIndex > 0) {
-			DOTween.KillAll();
-			if (isMoving) {
-				CompleteMove();
-			}
-			State.DoUndo();
-			Refresh();
-			if (onUndo != null) {
-				onUndo();
-			}
+	void DoUndo()
+	{
+		if (State.undoIndex <= 0)
+			return;
+		
+		DOTween.KillAll();
+		if (isMoving) {
+			CompleteMove();
+		}
+		State.DoUndo();
+		Refresh();
+		if (onUndo != null) {
+			onUndo();
 		}
 	}
 
@@ -120,36 +125,97 @@ public class Game : MonoBehaviour {
 
 	/////////////////////////////////////////////////////////////////// MOVE
 
-	public void MoveStart(Vector3 dir) {
-		foreach (Mover m in moversToMove) {
-			movingCount++;
-			m.transform.DOMove(m.goalPosition, moveTime).OnComplete(MoveEnd).SetEase(Ease.Linear);
+	private struct MoverPos
+	{
+		public Mover m;
+		public Vector3Int Pos;
+
+		public MoverPos(Mover mov)
+		{
+			m = mov;
+			Pos = mov.Pos();
+		}
+	};
+
+	// Build a list of positions for each mover.
+	private List<MoverPos> GetMoverPositions()
+	{
+		var lerps = new List<MoverPos>();
+		foreach (var mover in movers)
+			lerps.Add(new MoverPos(mover));
+		return lerps;
+	}
+
+	// MoveStart calculates the 'logical' effects of a player action,
+	// building up a list of movements. Those are executed visually afterward.
+	public void MoveStart()
+	{
+		// For each movement 'cycle', we store the positions of all movers.
+		// If we wanted to, we could compress this down to only those movers which have
+		// changed positions, though it'd be some extra work to tell when things should
+		// start moving. (This might be important for large overworlds.)
+		PlannedMoves.Clear();
+		
+		for (int i = 0; i < 999 /*safety*/ && movers.Any(m => m.HasPlannedMove()); ++i)
+		{
+			PlannedMoves.Add(GetMoverPositions());
+			
+			// Execute planned moves.
+			var moved = false;
+			foreach (var mover in movers)
+				if (mover.ExecuteLogicalMove())
+					moved = true;
+			
+			// Update the contents of the grid.
+			if (moved)
+			{
+				// NOTE: if we want improved performance, we can track
+				// which movers have actually moved and pass them in to
+				// SyncGrid, only changing their previous & new destinations
+				// rather than regenerating the whole grid.
+				SyncGrid();
+			}
+			
+			// Check for follow-ups, like things starting or continuing to fall.
+			foreach (var mover in movers)
+				mover.DoPostMoveEffects();
+		}
+		
+		PlannedMoves.Add(GetMoverPositions());
+
+		// Finally, start animating the moves we just calculated.
+		StartMoveCycle(false);
+		// After they're all done or cancelled, we'll run CompleteMove().
+	}
+
+	private void StartMoveCycle(bool falling)
+	{
+		foreach (var move in PlannedMoves[0])
+			move.m.transform.position = move.Pos;
+		PlannedMoves.RemoveAt(0);
+		if (PlannedMoves.Count == 0)
+		{
+			CompleteMove();
+			return;
+		}
+
+		var dur = falling ? fallTime : moveTime;
+		foreach (var move in PlannedMoves[0])
+		{
+			if (move.Pos == move.m.Pos()) continue;
+			++movingCount;
+			move.m.transform.DOMove(move.Pos, dur).OnComplete(MoveEnd).SetEase(Ease.Linear);
 		}
 	}
 
 	public void MoveEnd() {
 		movingCount--;
-		if (movingCount == 0) {
-			SyncGrid();
-			FallStart();
-		}
-	}
-	
-	public void FallStart() {
-		movers = movers.OrderBy((c) => -c.transform.position.z).ToArray();
-
-		foreach (Mover m in movers) {
-			m.FallStart();
-		}
-		if (movingCount == 0) {
-			FallEnd();
-		}
-	}
-
-	public void FallEnd() {
-		if (movingCount == 0) {
-			Refresh();
-			CompleteMove();
+		if (movingCount == 0)
+		{
+			// We assume that all move cycles after the first are falls.
+			// This won't be true for all games (eg those with conveyors,
+			// slippery ice, etc), so you'll need to adjust this.
+			StartMoveCycle(false);
 		}
 	}
 

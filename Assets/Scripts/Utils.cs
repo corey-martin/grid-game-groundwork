@@ -7,7 +7,10 @@ using System.Linq;
 public class Utils
 {
 	public static List<Mover> movers = new List<Mover>();
-	static int maxColliders = 5;
+
+	// These are built into newer versions of Unity.
+	public static Vector3Int forward { get { return new Vector3Int(0, 0, 1); } }
+	public static Vector3Int back { get { return new Vector3Int(0, 0, -1); } }
 
 	public static IEnumerator LoadScene(string scene) {
 		yield return WaitFor.EndOfFrame;
@@ -114,11 +117,6 @@ public class Utils
 	public static bool TaggedObjIsAtPos(Vector3Int pos, string tag)
 	{
 		return GetTaggedObjAtPos(pos, tag) != null;
-	}
-
-	public static bool TaggedObjIsAtPos(Vector3 pos, string tag)
-	{
-		return GetTaggedObjAtPos(Vec3ToInt(pos), tag) != null;
 	}
 
 	// WALLS // 
