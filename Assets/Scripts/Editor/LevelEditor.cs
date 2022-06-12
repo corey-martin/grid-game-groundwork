@@ -433,7 +433,7 @@ public class LevelEditor : EditorWindow {
         
         foreach (var slo in serializedLevel.LevelObjects)
         {
-	        GameObject prefab = Resources.Load(slo.prefab) as GameObject;
+			GameObject prefab = (GameObject)AssetDatabase.LoadAssetAtPath(PathToAsset(slo.prefab), typeof(GameObject));
 	        var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
 	        go.transform.parent = level.transform;
 	        go.transform.localPosition = slo.pos;
