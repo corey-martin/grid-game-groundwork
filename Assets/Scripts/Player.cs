@@ -2,8 +2,7 @@
 
 public class Player : Mover {
 
-	public static Player instance;
-	public static Player Get() { return instance; }
+	public static Player instance { get; private set; }
 	Vector3Int direction = Vector3Int.zero;
 
 	void Awake() {
@@ -17,7 +16,7 @@ public class Player : Mover {
 	}
 
 	public bool CanInput() {
-		return !Game.Get().isMoving && !Game.Get().holdingUndo;
+		return !Game.instance.isMoving && !Game.instance.holdingUndo;
 	}
 
 	public void CheckInput() {
@@ -48,6 +47,6 @@ public class Player : Mover {
 		}
 
 		if (TryPlanMove(direction))
-			Game.Get().MoveStart();
+			Game.instance.MoveStart();
 	}
 }

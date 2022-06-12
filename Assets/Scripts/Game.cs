@@ -12,8 +12,18 @@ public class Game : MonoBehaviour {
 	public static GameEvent onReset;
 	public static GameEvent onMoveComplete;
 
-	public static Game instance;
-	public static Game Get() { return instance; }
+	private static Game instanceRef;
+	public static Game instance {
+		get {
+			if (instanceRef == null) {
+				instanceRef = FindObjectOfType<Game>();
+				if (instanceRef == null) {
+					Debug.LogError("No `Game` object found! Add the `GameController` prefab to the hierarchy.");
+				}
+			}
+			return instanceRef;
+		}
+	}
 
 	public LogicalGrid Grid = new LogicalGrid();
 
@@ -30,12 +40,16 @@ public class Game : MonoBehaviour {
 	public static bool isPolyban = true;
 
 	void Awake() {
-		instance = this;
-		Application.targetFrameRate = 60;
+		if (instanceRef == null || instanceRef == this) {
+			instanceRef = this;
+			Application.targetFrameRate = 60;
 
-		if (Application.isEditor && !SaveData.initialized) {
-			SaveData.LoadGame(1);
-			SyncGrid();
+			if (Application.isEditor && !SaveData.initialized) {
+				SaveData.LoadGame(1);
+				SyncGrid();
+			}
+		} else {
+			Debug.LogError("More than 1 Game class in scene");
 		}
 	}
 
