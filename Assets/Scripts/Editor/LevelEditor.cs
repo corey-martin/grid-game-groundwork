@@ -19,7 +19,7 @@ public class LevelEditor : EditorWindow {
     int spawnHeight = 0;
 	string currentLevel;
     string newLevelName = "";
-	string levelPath = "Assets/Resources/Levels/";
+	string levelPath = "Assets/Levels/";
 	bool overwriteLevel = false;
                         
     public GameObject[] prefabs;
@@ -117,17 +117,36 @@ public class LevelEditor : EditorWindow {
 	}
 
 	void PopulateList() {
-        if (prefabs.Length == 0 && File.Exists(textFilePath)) {
+		
+		if (prefabs != null && prefabs.Length > 0) return;
+
+        if (File.Exists(textFilePath)) {
 			List<GameObject> newPrefabs = new List<GameObject>();
             string[] prefabNames = File.ReadAllLines(textFilePath);
 			foreach (string prefabName in prefabNames) {
-				GameObject go = Resources.Load<GameObject>(prefabName);
+				GameObject go = (GameObject)AssetDatabase.LoadAssetAtPath(PathToAsset(prefabName), typeof(GameObject));
 				if (go != null) {
 					newPrefabs.Add(go);
 				}
 			}
 			prefabs = newPrefabs.ToArray();
 		}
+	}
+
+	string PathToAsset(string s) {
+        string[] guids1 = AssetDatabase.FindAssets(s, null);
+        foreach (string guid1 in guids1) {
+			string path = AssetDatabase.GUIDToAssetPath(guid1);
+			if (path.Contains("Assets/Prefabs/")) {
+				string trimmedPath = path.Replace("Assets/Prefabs/", "");
+				trimmedPath = trimmedPath.Replace(".prefab", "");
+				if (trimmedPath == s) {
+            		return path;
+				}
+			}
+        }
+		Debug.LogError("Couldnt find a prefab named " + s);
+		return string.Empty;
 	}
 
 	void RefreshSavedLevels() {
