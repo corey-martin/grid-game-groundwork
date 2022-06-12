@@ -22,7 +22,7 @@ public class Game : MonoBehaviour {
 		}
 	}
 
-	public LogicalGrid Grid = new LogicalGrid();
+    private Dictionary<Vector3Int, HashSet<GameObject>> gridContents = new Dictionary<Vector3Int, HashSet<GameObject>>();
 
 	public static Mover[] movers { get; private set; }
 	public static Wall[] walls { get; private set; }
@@ -90,8 +90,24 @@ public class Game : MonoBehaviour {
 	public void SyncGrid()
 	{
 		var tiles = GameObject.FindGameObjectsWithTag("Tile");
-		Grid.SyncContents(tiles);
-	}
+
+        foreach (var kv in gridContents)
+            kv.Value.Clear();
+        foreach (var tile in tiles)
+        {
+            var pos = Vector3Int.RoundToInt(tile.transform.position);
+            if (!gridContents.ContainsKey(pos))
+                gridContents[pos] = new HashSet<GameObject>();
+            gridContents[pos].Add(tile);
+        }
+    }
+
+    public HashSet<GameObject> GetContentsAt(Vector3Int pos)
+    {
+        if (!gridContents.ContainsKey(pos))
+            gridContents[pos] = new HashSet<GameObject>(); // weird side effect...
+        return gridContents[pos];
+    }
 	
 	public bool isMoving { get { return movingCount > 0; } }
 
