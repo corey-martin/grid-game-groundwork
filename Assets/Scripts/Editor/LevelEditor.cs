@@ -90,6 +90,10 @@ public class LevelEditor : EditorWindow {
     }
        
 	void OnValidate() {
+		if (Game.instance == null) {
+			var prefab = (GameObject)AssetDatabase.LoadAssetAtPath(PathToAsset("GameController"), typeof(GameObject));
+	        var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+		} 
 		EnsureTagsExist();
  		Reset();
 		Refresh();
@@ -101,10 +105,7 @@ public class LevelEditor : EditorWindow {
 	}
 	
 	void Refresh() {
-		Game game = FindObjectOfType<Game>();
-		if (game != null) {
-        	game.EditorRefresh();
-		}
+		Game.instance.EditorRefresh();
 		RefreshSceneLevels();
 		RefreshSavedLevels();
 	}

@@ -17,9 +17,6 @@ public class Game : MonoBehaviour {
 		get {
 			if (instanceRef == null) {
 				instanceRef = FindObjectOfType<Game>();
-				if (instanceRef == null) {
-					Debug.LogError("No `Game` object found! Add the `GameController` prefab to the hierarchy.");
-				}
 			}
 			return instanceRef;
 		}
