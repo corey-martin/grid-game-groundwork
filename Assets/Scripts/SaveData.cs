@@ -6,13 +6,12 @@ using UnityEngine;
 
 public class SaveData {
 
-	public static SaveData saveData;
-	public static bool initialized = false;
-	public static int gameNumber = 1;
-	static BinaryFormatter bf = new BinaryFormatter();
-	public static PlayerData playerData = new PlayerData();
+	public static bool initialized { get; private set; } = false;
+	private static int gameNumber = 1;
+	private static BinaryFormatter bf = new BinaryFormatter();
+	private static PlayerData playerData = new PlayerData();
 
-	public static string Path(int i) {
+	private static string Path(int i) {
 		return Application.persistentDataPath + "/" + i + ".dat";
 	}
 

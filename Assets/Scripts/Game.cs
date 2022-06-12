@@ -24,16 +24,16 @@ public class Game : MonoBehaviour {
 
 	public LogicalGrid Grid = new LogicalGrid();
 
-	public static Mover[] movers;
-	public static Wall[] walls;
+	public static Mover[] movers { get; private set; }
+	public static Wall[] walls { get; private set; }
 
 	public float moveTime = 0.18f; // time it takes to move 1 unit
 	public float fallTime = 0.1f; // time it takes to fall 1 unit
 
-	public int movingCount = 0;
+	private int movingCount = 0;
 	private List<List<MoverPos>> PlannedMoves = new List<List<MoverPos>>();
 
-	public bool holdingUndo = false;
+	public bool holdingUndo { get; private set; } = false;
 	public static bool isPolyban = true;
 
 	void Awake() {
