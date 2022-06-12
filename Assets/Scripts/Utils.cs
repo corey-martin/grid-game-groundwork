@@ -91,7 +91,7 @@ public class Utils
 
 	private static HashSet<GameObject> GetTilesAt(Vector3Int pos)
 	{
-		return Game.instance.Grid.GetContentsAt(pos);
+		return Game.instance.GetContentsAt(pos);
 	}
 
 	private static T GetObjAtPos<T>(Vector3Int pos)
