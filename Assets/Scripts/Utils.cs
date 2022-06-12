@@ -108,9 +108,11 @@ public class Utils
 
 	public static GameObject GetTaggedObjAtPos(Vector3Int pos, string tag)
 	{
-		foreach (var tile in GetTilesAt(pos))
-			if (tile.CompareTag(tag))
+		foreach (var tile in GetTilesAt(pos)) {
+			if (tile.transform.parent.CompareTag(tag)) {
 				return tile;
+			}
+		}
 		return null;
 	}
 
