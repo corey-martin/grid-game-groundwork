@@ -363,6 +363,7 @@ public class LevelEditor : EditorWindow {
 					}
 					currentLevel = savedLevels[savedLevelIndex];
 					LoadFromDisk(currentLevel);
+					Refresh();
 				}
 			}
 			savedLevelIndex = EditorGUILayout.Popup(savedLevelIndex, savedLevels.ToArray());
