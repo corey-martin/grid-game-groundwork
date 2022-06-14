@@ -75,7 +75,14 @@ public class LevelEditor : EditorWindow {
 	void OnEnable() {
 		SceneView.duringSceneGui += SceneGUI;
         EditorApplication.playModeStateChanged += ChangedPlayModeState;
+        Undo.undoRedoPerformed += Refresh;
     }
+
+	void OnDisable() {
+		SceneView.duringSceneGui -= SceneGUI;
+        EditorApplication.playModeStateChanged -= ChangedPlayModeState;
+        Undo.undoRedoPerformed -= Refresh;
+	}
 
     void ChangedPlayModeState(PlayModeStateChange state) {
 		switch (state) {
