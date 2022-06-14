@@ -145,12 +145,9 @@ public class LevelEditor : EditorWindow {
         string[] guids1 = AssetDatabase.FindAssets(s, null);
         foreach (string guid1 in guids1) {
 			string path = AssetDatabase.GUIDToAssetPath(guid1);
-			if (path.Contains("Assets/Prefabs/")) {
-				string trimmedPath = path.Replace("Assets/Prefabs/", "");
-				trimmedPath = trimmedPath.Replace(".prefab", "");
-				if (trimmedPath == s) {
-            		return path;
-				}
+			string fileName = Path.GetFileNameWithoutExtension(path);
+			if (fileName == s) {
+				return path;
 			}
         }
 		Debug.LogError("Couldnt find a prefab named " + s);
