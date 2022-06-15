@@ -142,12 +142,14 @@ public class LevelEditor : EditorWindow {
 	}
 
 	string PathToAsset(string s) {
-        string[] guids1 = AssetDatabase.FindAssets(s, null);
-        foreach (string guid1 in guids1) {
-			string path = AssetDatabase.GUIDToAssetPath(guid1);
-			string fileName = Path.GetFileNameWithoutExtension(path);
-			if (fileName == s) {
-				return path;
+        string[] guids = AssetDatabase.FindAssets(s, null);
+        foreach (string guid in guids) {
+			string path = AssetDatabase.GUIDToAssetPath(guid);
+			if (path.ToLower().Contains(".prefab")) {
+				string fileName = Path.GetFileNameWithoutExtension(path);
+				if (fileName == s) {
+					return path;
+				}
 			}
         }
 		Debug.LogError("Couldnt find a prefab named " + s);
