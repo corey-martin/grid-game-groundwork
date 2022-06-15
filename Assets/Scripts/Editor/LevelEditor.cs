@@ -43,6 +43,7 @@ public class LevelEditor : EditorWindow {
 	Vector2 scrollPos;
 	Color gizmoColor = Color.white;
 	Vector2 mousePosOnClick = new Vector2();
+	bool refreshPrefabs = true;
 
     GameObject level {
 		get {
@@ -104,6 +105,7 @@ public class LevelEditor : EditorWindow {
 		EnsureTagsExist();
  		Reset();
 		Refresh();
+		refreshPrefabs = true;
 	}
 
 	void Reset() {
@@ -125,8 +127,6 @@ public class LevelEditor : EditorWindow {
 	}
 
 	void PopulateList() {
-		
-		if (prefabs != null && prefabs.Length > 0) return;
 
         if (File.Exists(textFilePath)) {
 			List<GameObject> newPrefabs = new List<GameObject>();
@@ -245,7 +245,11 @@ public class LevelEditor : EditorWindow {
 		
 		BigSpace();
 
-        if (prefabs != null && prefabs.Length > 0) {
+		if (prefabs == null || prefabs.Length == 0) {
+			PopulateList();
+		}
+
+		if (prefabs != null && refreshPrefabs) {
 			List<string> selectStringsTmp = new List<string>();
 			selectStringsTmp.Add("None");
 			selectStringsTmp.Add("Erase");
@@ -255,9 +259,7 @@ public class LevelEditor : EditorWindow {
 				}
 			}
 			selectStrings = selectStringsTmp.ToArray();
-        } else {
-			PopulateList();
-			return;
+			refreshPrefabs = false;
 		}
  
 		GUILayout.Label ("Selected GameObject:", EditorStyles.boldLabel);
