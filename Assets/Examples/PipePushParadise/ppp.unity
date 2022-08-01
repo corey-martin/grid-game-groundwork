@@ -3815,6 +3815,11 @@ PrefabInstance:
       propertyPath: fallTime
       value: 0.05
       objectReference: {fileID: 0}
+    - target: {fileID: 877372581326712350, guid: 077771e453471a74990da57584a62930,
+        type: 3}
+      propertyPath: moveBufferSpeedupFactor
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 877372581326712351, guid: 077771e453471a74990da57584a62930,
         type: 3}
       propertyPath: m_LocalPosition.x
