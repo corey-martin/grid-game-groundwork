@@ -29,6 +29,7 @@ public class Game : MonoBehaviour {
 
 	public float moveTime = 0.18f; // time it takes to move 1 unit
 	public float fallTime = 0.1f; // time it takes to fall 1 unit
+	public float moveBufferSpeedupFactor = 0.5f; //degree of speedup due to buffered inputs
 
 	private int movingCount = 0;
 	private List<List<MoverPos>> PlannedMoves = new List<List<MoverPos>>();
@@ -81,6 +82,7 @@ public class Game : MonoBehaviour {
 
 	public void Refresh() {
 		movingCount = 0;
+		Player.instance.ClearInputBuffer();
 		PlannedMoves.Clear();
 		foreach (var mover in movers)
 			mover.Stop();
@@ -210,7 +212,18 @@ public class Game : MonoBehaviour {
 			return;
 		}
 
-		var dur = falling ? fallTime : moveTime;
+		if (falling) { Player.instance.ClearInputBuffer(); }
+
+		float dur;
+		if (falling)
+		{
+			dur = fallTime;
+		}
+		else
+		{
+			dur = moveTime / (Player.instance.InputBuffer.Count()*moveBufferSpeedupFactor + 1); // increase the animation speed when moves are buffered
+		}
+
 		foreach (var move in PlannedMoves[0])
 		{
 			if (move.Pos == move.m.Pos()) continue;
@@ -226,7 +239,7 @@ public class Game : MonoBehaviour {
 			// We assume that all move cycles after the first are falls.
 			// This won't be true for all games (eg those with conveyors,
 			// slippery ice, etc), so you'll need to adjust this.
-			StartMoveCycle(false);
+			StartMoveCycle(true);
 		}
 	}
 
