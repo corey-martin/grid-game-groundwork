@@ -51,7 +51,7 @@ public class LevelEditor : EditorWindow {
 			if (wrapperRef == null) {
 				wrapperRef = new GUIStyle();
 				wrapperRef.padding = new RectOffset(20,20,20,20);
-				float n = 0.175f;
+				float n = 0.16f;
 				wrapperRef.normal.background = Utils.MakeTex(1, 1, new Color(n, n, n, 1f));
 			}
 			return wrapperRef;
