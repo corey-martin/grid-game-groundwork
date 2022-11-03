@@ -18,15 +18,15 @@ public class PipePushParadise : MonoBehaviour
     }
 
     void OnEnable() {
-        Game.onMoveComplete += CheckWinCondition;
-        Game.onUndo += CheckWinCondition;
-        Game.onReset += CheckWinCondition;
+        EventManager.onMoveComplete += CheckWinCondition;
+        EventManager.onUndo += CheckWinCondition;
+        EventManager.onReset += CheckWinCondition;
     }
 
     void OnDisable() {
-        Game.onMoveComplete -= CheckWinCondition;
-        Game.onUndo -= CheckWinCondition;
-        Game.onReset -= CheckWinCondition;
+        EventManager.onMoveComplete -= CheckWinCondition;
+        EventManager.onUndo -= CheckWinCondition;
+        EventManager.onReset -= CheckWinCondition;
     }
 
     void CheckWinCondition() {

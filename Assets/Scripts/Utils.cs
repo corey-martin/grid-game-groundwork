@@ -17,6 +17,26 @@ public class Utils
 		SceneManager.LoadScene(scene, LoadSceneMode.Single);
 	}
 
+	private static List<string> allLevelsRef;
+	public static List<string> allLevels {
+		get {
+			if (allLevelsRef == null) {
+				allLevelsRef = new List<string>();
+				Object[] levels = Resources.LoadAll("Levels");
+				foreach (Object t in levels) {
+					allLevelsRef.Add(t.name);
+				}
+			}
+			return allLevelsRef;
+		}
+	}
+	public static void RefreshLevels() {
+		allLevelsRef = null;
+	}
+
+	public static string sceneName => SceneManager.GetActiveScene().name;
+	public static bool isMetaScene => LevelManager.currentLevelName.Contains("0_");
+
     public static int StringToInt(string intString) {
         int i = 0;
         if (!System.Int32.TryParse(intString, out i)) {
@@ -40,6 +60,33 @@ public class Utils
     public static void RoundPosition(Transform t) {
     	Vector3 p = t.position;
     	t.position = Vec3ToInt(p);
+    }
+
+    public static void RoundRotation(Transform t) {
+		Vector3 r = t.eulerAngles;
+		r = StandardizeRotation(r);
+		t.eulerAngles = Vec3ToInt(r);
+    }
+
+    public static Vector3 StandardizeRotation(Vector3 v) {
+       
+        if (v.z < -5) {
+            float z = v.z;
+            while (z < 0) {
+                z += 360;
+            }
+            return new Vector3(v.x, v.y, z);
+
+        } else if (v.z > 355) {
+            float z = v.z;
+            while (z > 355) {
+                z -= 360;
+            }
+            return new Vector3(v.x, v.y, z);
+
+        } else {
+            return v;
+        }
     }
 
     public static void AvoidIntersect(Transform root) {
@@ -81,6 +128,17 @@ public class Utils
 		return Vector3Int.RoundToInt(v);
 	}
 
+	public static bool TileIsEmpty(Vector3 pos, bool ignorePlayer) {
+		return TileIsEmpty(Vec3ToInt(pos), ignorePlayer);
+	}
+
+	public static bool TileIsEmpty(Vector3Int pos, bool ignorePlayer) {
+		if (WallIsAtPos(pos)) return false;
+		Mover m = GetMoverAtPos(pos);
+		if (m != null && !m.isPlayer) return false;
+		return true;
+	}
+
 	public static bool TileIsEmpty(Vector3 pos) {
 		return TileIsEmpty(Vec3ToInt(pos));
 	}
@@ -91,6 +149,7 @@ public class Utils
 
 	private static HashSet<GameObject> GetTilesAt(Vector3Int pos)
 	{
+		if (Game.instance == null) return new HashSet<GameObject>();
 		return Game.instance.Grid.GetContentsAt(pos);
 	}
 
@@ -167,4 +226,58 @@ public class Utils
 		}
 		return movers.Distinct().ToList();
 	}
+
+	public static bool AIsHigherThanB(Transform a, Transform b) {
+		return a.position.z < b.position.z;
+	}
+
+	public static bool GroundBelowPosition(Vector3Int v, Mover source = null) {
+		Vector3Int posToCheck = v + forward;
+		if (WallIsAtPos(posToCheck)) {
+			return true;
+		}
+		Mover m = GetMoverAtPos(posToCheck);
+		if (m != null && m != source && !m.isFalling) {
+			return true;
+		}
+		return false;
+	}
+
+	public static bool GroundBelowTile(Tile tile) {
+		return GroundBelowPosition(tile.pos);
+	}
+
+	public static bool GroundBelowPlayer() {
+		return GroundBelow(Player.instance);
+	}
+
+	public static bool GroundBelow(Mover m) {
+		foreach (Tile tile in m.tiles)
+		{
+			if (tile.pos.z == 0)
+				return true;
+			if (Utils.GroundBelowTile(tile)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static bool PlayerAtPos(Vector3 v) {
+		Mover m = GetMoverAtPos(v);
+		if (m != null && m.isPlayer) return true;
+		return false;
+	}
+	 
+	public static Texture2D MakeTex(int width, int height, Color col) {
+        Color[] pix = new Color[width*height];
+ 
+        for(int i = 0; i < pix.Length; i++)
+            pix[i] = col;
+ 
+        Texture2D result = new Texture2D(width, height);
+        result.SetPixels(pix);
+        result.Apply();
+        return result;
+    }
 }

@@ -2,6 +2,7 @@
 
 public class LevelGizmo : MonoBehaviour
 {
+    #if UNITY_EDITOR
     public static Vector3 pos { get; private set; }
     static Color color = new Color(2f, 2f, 2f);
     public static bool drawEnabled { get; private set; }
@@ -23,4 +24,5 @@ public class LevelGizmo : MonoBehaviour
             Gizmos.DrawWireCube(pos - (Vector3.one * 0.01f), Vector3.one);
         }
     }
+    #endif
 }

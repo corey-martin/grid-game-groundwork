@@ -6,12 +6,6 @@ using DG.Tweening;
 
 public class Game : MonoBehaviour {
 
-	
-	public delegate void GameEvent();
-	public static GameEvent onUndo;
-	public static GameEvent onReset;
-	public static GameEvent onMoveComplete;
-
 	private static Game instanceRef;
 	public static Game instance {
 		get {
@@ -24,18 +18,21 @@ public class Game : MonoBehaviour {
 
 	public LogicalGrid Grid = new LogicalGrid();
 
-	public static Mover[] movers { get; private set; }
-	public static Wall[] walls { get; private set; }
+	public static List<Mover> movers = new List<Mover>();
+	public static List<Wall> walls = new List<Wall>();
 
 	public float moveTime = 0.18f; // time it takes to move 1 unit
 	public float fallTime = 0.1f; // time it takes to fall 1 unit
 	public float moveBufferSpeedupFactor = 0.5f; //degree of speedup due to buffered inputs
+	
+	public Ease moveEase = Ease.Linear;
 
 	private int movingCount = 0;
 	private List<List<MoverPos>> PlannedMoves = new List<List<MoverPos>>();
 
 	public bool holdingUndo { get; private set; } = false;
 	public static bool isPolyban = true;
+	public bool blockInput = false;
 
 	void Awake() {
 		if (instanceRef == null || instanceRef == this) {
@@ -52,17 +49,30 @@ public class Game : MonoBehaviour {
 	}
 
 	void Start() {
-		movers = FindObjectsOfType<Mover>();
+		StartCoroutine(InitAfterFrame());
+	}
+
+	IEnumerator InitAfterFrame() {
+		blockInput = true;
+		yield return WaitFor.EndOfFrame;
+		SetReferences();
 		State.Init();
 		foreach (Mover mover in movers) {
 			State.AddMover(mover);
 		}
 		State.AddToUndoStack();
+		blockInput = false;
 	}
 
 	public void EditorRefresh() {
-		movers = FindObjectsOfType<Mover>();
-		walls = FindObjectsOfType<Wall>();
+		SetReferences();
+	}
+
+	void SetReferences() {
+		movers.Clear();
+		walls.Clear();
+		movers = FindObjectsOfType<Mover>().ToList();
+		walls = FindObjectsOfType<Wall>().ToList();
 		SyncGrid();
 	}
 
@@ -103,9 +113,7 @@ public class Game : MonoBehaviour {
 		DOTween.KillAll();
 		State.DoReset();
 		Refresh();
-		if (onReset != null) {
-			onReset();
-		}
+		EventManager.onReset?.Invoke();
     }
 
 	void DoUndo()
@@ -119,9 +127,7 @@ public class Game : MonoBehaviour {
 		}
 		State.DoUndo();
 		Refresh();
-		if (onUndo != null) {
-			onUndo();
-		}
+		EventManager.onUndo?.Invoke();
 	}
 
 	void UndoRepeat() {
@@ -154,14 +160,17 @@ public class Game : MonoBehaviour {
 	private List<MoverPos> GetMoverPositions()
 	{
 		var lerps = new List<MoverPos>();
-		foreach (var mover in movers)
-			lerps.Add(new MoverPos(mover));
+		foreach (var mover in movers) {
+			if (mover != null) {
+				lerps.Add(new MoverPos(mover));
+			}
+		}
 		return lerps;
 	}
 
 	// MoveStart calculates the 'logical' effects of a player action,
 	// building up a list of movements. Those are executed visually afterward.
-	public void MoveStart()
+	public void MoveStart(bool doPostMoveEffects = true)
 	{
 		// For each movement 'cycle', we store the positions of all movers.
 		// If we wanted to, we could compress this down to only those movers which have
@@ -172,16 +181,22 @@ public class Game : MonoBehaviour {
 		for (int i = 0; i < 999 /*safety*/ && movers.Any(m => m.HasPlannedMove()); ++i)
 		{
 			PlannedMoves.Add(GetMoverPositions());
+			bool isPushing = false;
 			
 			// Execute planned moves.
 			var moved = false;
-			foreach (var mover in movers)
-				if (mover.ExecuteLogicalMove())
+			foreach (var mover in movers) {
+				if (mover.ExecuteLogicalMove()) {
+					if (!mover.isPlayer) isPushing = true;
 					moved = true;
+				}
+			}
 			
 			// Update the contents of the grid.
 			if (moved)
 			{
+				if (isPushing) EventManager.onPush?.Invoke();
+
 				// NOTE: if we want improved performance, we can track
 				// which movers have actually moved and pass them in to
 				// SyncGrid, only changing their previous & new destinations
@@ -190,8 +205,10 @@ public class Game : MonoBehaviour {
 			}
 			
 			// Check for follow-ups, like things starting or continuing to fall.
-			foreach (var mover in movers)
-				mover.DoPostMoveEffects();
+			if (doPostMoveEffects) {
+				foreach (var mover in movers)
+					mover.DoPostMoveEffects();
+			}
 		}
 		
 		PlannedMoves.Add(GetMoverPositions());
@@ -199,6 +216,15 @@ public class Game : MonoBehaviour {
 		// Finally, start animating the moves we just calculated.
 		StartMoveCycle(false);
 		// After they're all done or cancelled, we'll run CompleteMove().
+	}
+
+	public Vector3 GetPlayerPosition() {
+		if (PlannedMoves.Count > 0) {
+			foreach (var move in PlannedMoves[0]) {
+				return move.Pos;
+			}
+		}
+		return Player.instance.transform.position;
 	}
 
 	private void StartMoveCycle(bool falling)
@@ -223,12 +249,11 @@ public class Game : MonoBehaviour {
 		{
 			dur = moveTime / (Player.instance.InputBuffer.Count()*moveBufferSpeedupFactor + 1); // increase the animation speed when moves are buffered
 		}
-
 		foreach (var move in PlannedMoves[0])
 		{
 			if (move.Pos == move.m.Pos()) continue;
 			++movingCount;
-			move.m.transform.DOMove(move.Pos, dur).OnComplete(MoveEnd).SetEase(Ease.Linear);
+			move.m.transform.DOMove(move.Pos, dur).OnComplete(MoveEnd).SetEase(moveEase);
 		}
 	}
 
@@ -245,8 +270,6 @@ public class Game : MonoBehaviour {
 
 	public void CompleteMove() {
 		State.OnMoveComplete();
-		if (onMoveComplete != null) {
-			onMoveComplete();
-		}
+		EventManager.onMoveComplete?.Invoke();
 	}
 }

@@ -19,8 +19,8 @@ public class LevelEditor : EditorWindow {
     int spawnHeight = 0;
 	string currentLevel;
     string newLevelName = "";
-	string levelPath = "Assets/Levels/";
-	bool overwriteLevel = false;
+	string levelPath => Application.dataPath + "/Resources/Levels/";
+	bool overwriteLevel = true;
                         
     public GameObject[] prefabs;
 
@@ -32,8 +32,8 @@ public class LevelEditor : EditorWindow {
 	static bool playModeActive;
 	Event e;
 	bool titleIsSet;
-    static string textFilePath { get { return Application.dataPath + "/leveleditorprefabs.txt"; } }
-    public List<string> savedLevels = new List<string>();
+    static string textFilePath => Application.dataPath + "/leveleditorprefabs.txt";
+    List<string> savedLevels => Utils.allLevels;
     int savedLevelIndex = 0;
 	int sceneLevelIndex;
 	bool snapToGrid = true;
@@ -45,28 +45,56 @@ public class LevelEditor : EditorWindow {
 	Vector2 mousePosOnClick = new Vector2();
 	bool refreshPrefabs = true;
 
-    GameObject level {
+	GUIStyle wrapperRef;
+	GUIStyle wrapper {
 		get {
-			GameObject l = FindOrCreate(currentLevel, FindOrCreate("Levels").transform);
-			l.tag = "Level";
-			return l;
+			if (wrapperRef == null) {
+				wrapperRef = new GUIStyle();
+				wrapperRef.padding = new RectOffset(20,20,20,20);
+				float n = 0.175f;
+				wrapperRef.normal.background = Utils.MakeTex(1, 1, new Color(n, n, n, 1f));
+			}
+			return wrapperRef;
+		}
+	}
+
+	GameObject levelRef = null;
+    GameObject levelManagerGameObject {
+		get {
+			if (levelRef == null) {
+				LevelManager levelManager = FindObjectOfType<LevelManager>();
+				if (levelManager != null) {
+					levelRef = levelManager.gameObject;
+				} else {
+					levelRef = new GameObject();
+					levelRef.AddComponent<LevelManager>();
+					levelRef.transform.name = "LevelManager";
+				}
+			}
+			return levelRef;
 		}
     }
 
-	GameObject FindOrCreate(string s, Transform parentObj = null) {
-		GameObject go = GameObject.Find(s);
-		if (go == null) {
-			go = new GameObject();
-			go.transform.name = s;
-			if (parentObj != null) {
-				go.transform.SetParent(parentObj);
+	GameObject currentLevelParentRef;
+	GameObject currentLevelParent {
+		get {
+			if (currentLevelParentRef == null) {
+				GameObject existingLevelParent = GameObject.Find(currentLevel);
+				if (existingLevelParent != null && existingLevelParent.CompareTag("Level")) {
+					currentLevelParentRef = existingLevelParent;
+				} else {
+					currentLevelParentRef = new GameObject();
+					currentLevelParentRef.transform.name = currentLevel;
+					currentLevelParentRef.transform.parent = levelManagerGameObject.transform;
+				}
 			}
-        	Undo.RegisterCreatedObjectUndo (go, "Create object");
+			return currentLevelParentRef;
 		}
-		return go;
 	}
 
-	List<string> sceneLevels = new List<string>();
+	void HorizontalLine() => EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+
+	List<string> allLevels => Utils.allLevels;
 
 	[MenuItem("Window/Level Editor")] 
 	public static void ShowWindow() {
@@ -77,6 +105,7 @@ public class LevelEditor : EditorWindow {
 		SceneView.duringSceneGui += SceneGUI;
         EditorApplication.playModeStateChanged += ChangedPlayModeState;
         Undo.undoRedoPerformed += Refresh;
+		PopulateList();
     }
 
 	void OnDisable() {
@@ -98,9 +127,11 @@ public class LevelEditor : EditorWindow {
     }
        
 	void OnValidate() {
+		if (Utils.isMetaScene) return;
 		if (Game.instance == null) {
-			var prefab = (GameObject)AssetDatabase.LoadAssetAtPath(PathToAsset("GameController"), typeof(GameObject));
-	        var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+			return;
+			//var prefab = (GameObject)AssetDatabase.LoadAssetAtPath(PathToAsset("GameController"), typeof(GameObject));
+	        //var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
 		} 
 		EnsureTagsExist();
  		Reset();
@@ -114,8 +145,8 @@ public class LevelEditor : EditorWindow {
 	}
 	
 	void Refresh() {
-		Game.instance.EditorRefresh();
-		RefreshSceneLevels();
+		if (Utils.isMetaScene) return;
+		Game.instance?.EditorRefresh();
 		RefreshSavedLevels();
 	}
 
@@ -157,19 +188,7 @@ public class LevelEditor : EditorWindow {
 	}
 
 	void RefreshSavedLevels() {
-		savedLevels.Clear();
-		DirectoryInfo d = new DirectoryInfo(levelPath);
-		foreach (var file in d.GetFiles("*.json")) {
-			savedLevels.Add(file.Name.Replace(".json", ""));
-		}
-	}
-
-	void RefreshSceneLevels() {
-		sceneLevels.Clear();
-		GameObject[] levels = GameObject.FindGameObjectsWithTag("Level");
-		foreach (GameObject l in levels) {
-			sceneLevels.Add(l.name);
-		}
+		Utils.RefreshLevels();
 	}
 
 	void EnsureTagsExist() {
@@ -180,70 +199,56 @@ public class LevelEditor : EditorWindow {
 	void OnGUI() {
 
 		string previousLevel = currentLevel;
-
 		if (!titleIsSet) {
 			titleIsSet = true;
 			var texture = Resources.Load<Texture2D>("ggg");
 			titleContent = new GUIContent("Level Editor", texture);
 		}
-		GUI.backgroundColor = Color.grey;
 
-        BeginWindows();
- 		Rect windowRect = new Rect(20, 20, 420, 650); 
+        GUILayout.BeginVertical(wrapper);
 
-		GUIStyle myStyle = new GUIStyle (GUI.skin.window); 
-		myStyle.padding = new RectOffset(15,15,15,15);
-
-		windowRect = GUILayout.Window(1, windowRect, GetWindows, "", myStyle);
-        EndWindows();
+			scrollPos = GUILayout.BeginScrollView(scrollPos); 
+				DrawingWindow();
+				RefreshSavedLevels();
+				SaveLoadWindow();
+			EditorGUILayout.EndScrollView();
+        GUILayout.EndVertical();
 
 		if (previousLevel != currentLevel) {
-			Selection.activeGameObject = level;
+			Selection.activeGameObject = currentLevelParent;
 		}
-
-	}
-
-	void GetWindows(int unusedWindowID) {
-		scrollPos = GUILayout.BeginScrollView(scrollPos); 
-		
-		RefreshSceneLevels();
-		if (sceneLevels.Count > 0) {
-			DrawingWindow();
-		}
-		RefreshSavedLevels();
-		SaveLoadWindow();
-        EditorGUILayout.EndScrollView();
 	}
 
 	void DrawingWindow() {
 
 		GUILayout.Label ("DRAWING", EditorStyles.centeredGreyMiniLabel);
+		HorizontalLine();
 
-		BigSpace();
-
-		if (string.IsNullOrEmpty(currentLevel)) {
+		if (string.IsNullOrWhiteSpace(currentLevel)) {
 			GameObject level = GameObject.FindGameObjectWithTag("Level");
 			if (level != null) {
 				currentLevel = level.name;
 			}
 		}
+		
+		// FOR MULTIPLE SCENES AT ONCE
 
 		GUILayout.Label ("Currently Editing: ", EditorStyles.boldLabel);
 
 		sceneLevelIndex = 0;
-		for (int i = 0; i < sceneLevels.Count; i++) {
-			if (sceneLevels[i] == currentLevel) {
+		for (int i = 0; i < allLevels.Count; i++) {
+			if (allLevels[i] == currentLevel) {
 				sceneLevelIndex = i;
 			}
 		}
-        sceneLevelIndex = EditorGUILayout.Popup(sceneLevelIndex, sceneLevels.ToArray());
-		currentLevel = sceneLevels[sceneLevelIndex];
+        sceneLevelIndex = EditorGUILayout.Popup(sceneLevelIndex, allLevels.ToArray());
+		currentLevel = allLevels[sceneLevelIndex];
 
 		if (currentLevel == null) {
 			return;
 		}
 		
-		BigSpace();
+		EditorGUILayout.Space();
 
 		if (prefabs == null || prefabs.Length == 0) {
 			PopulateList();
@@ -316,26 +321,24 @@ public class LevelEditor : EditorWindow {
          
 	void SaveLoadWindow() {
 
-		if (savedLevels.Count > 0) {
-			GUILayout.Label ("SAVING AND LOADING", EditorStyles.centeredGreyMiniLabel);
-		}
-
-		BigSpace();
+		GUILayout.Label ("SAVING AND LOADING", EditorStyles.centeredGreyMiniLabel);
+		HorizontalLine();
+		EditorGUILayout.Space();
 
 		
 		EditorGUILayout.BeginHorizontal();
 
-		if (string.IsNullOrEmpty(newLevelName)) {
+		if (string.IsNullOrWhiteSpace(newLevelName)) {
 			if (GameObject.FindGameObjectWithTag("Level") == null) {
 				GUILayout.Label ("To create a new level, give it a name: ");
 			} else {
-				newLevelName = level.name;
+				newLevelName = currentLevelParent.name;
 			}
 		}
 		
-        if (!string.IsNullOrEmpty(newLevelName) && GUILayout.Button("Save Level As", GUILayout.Width(150))) {
+        if (!string.IsNullOrWhiteSpace(newLevelName) && GUILayout.Button("Save Level As", GUILayout.Width(150))) {
 
-			level.transform.name = currentLevel = newLevelName;
+			currentLevelParent.transform.name = currentLevel = newLevelName;
 			newLevelName = RemoveInvalidChars(newLevelName);
         	string path = "Assets/Resources/Levels/" + newLevelName + ".txt";
 
@@ -364,9 +367,10 @@ public class LevelEditor : EditorWindow {
 			if (GUILayout.Button("Load Level", GUILayout.Width(150))) {
 				if (!isDirty || !overwriteLevel || EditorUtility.DisplayDialog("Load " + savedLevels[savedLevelIndex] + "?", "Load " + savedLevels[savedLevelIndex] + "? Any unsaved changes to " + currentLevel + " will be lost.", "Confirm", "Cancel")) {
 					if (overwriteLevel) {
-						GameObject[] levels = GameObject.FindGameObjectsWithTag("Level");
-						foreach (GameObject l in levels) {
-							Undo.DestroyObjectImmediate(l);
+
+						Transform level = FindObjectOfType<LevelManager>().transform;
+						for (int i = level.childCount - 1; i >= 0; i--) {
+							Undo.DestroyObjectImmediate(level.GetChild(i).gameObject);
 						}
 					}
 					currentLevel = savedLevels[savedLevelIndex];
@@ -407,52 +411,49 @@ public class LevelEditor : EditorWindow {
 
         string path = levelPath + levelName + ".json";
 		StreamWriter writer = new StreamWriter(path, false);
-		writer.WriteLine(JsonUtility.ToJson(new SerializedLevel(level)));
+		writer.WriteLine(JsonUtility.ToJson(new SerializedLevel(currentLevelParent)));
 		writer.Close();
 		AssetDatabase.ImportAsset(path); 
 		RefreshSavedLevels();
+		AssetDatabase.Refresh();
 
 		isDirty = false;
 	}
 
 	void LoadFromDisk(string levelName) {
 
-		if (isLoading) {
+		if (isLoading || string.IsNullOrWhiteSpace(levelName)) {
 			return;
 		}
 
 		Vector3 levelPosition = Vector3.zero;
-		GameObject existingLevel = GameObject.Find(levelName);
-		if (existingLevel != null && existingLevel.CompareTag("Level")) {
-			levelPosition = existingLevel.transform.position;
-			Undo.DestroyObjectImmediate(existingLevel);
+		GameObject existingLevelParent = GameObject.Find(levelName);
+		if (existingLevelParent != null && existingLevelParent.CompareTag("Level")) {
+			levelPosition = existingLevelParent.transform.position;
+			Undo.DestroyObjectImmediate(existingLevelParent);
 		}
 
-        string path = levelPath + levelName + ".json";
-		
-		if (!File.Exists(path)) {
-			Debug.LogError("No level data found at " + path);
+		LevelManager.currentLevelName = levelName;
+        TextAsset textFile = Resources.Load<TextAsset>("Levels/" + levelName);
+		if (textFile == null) {
+			Debug.LogError("No level found called " + levelName);
 			return;
 		}
 
 		isLoading = true;
-
-        StreamReader reader = new StreamReader(path); 
-        SerializedLevel serializedLevel = JsonUtility.FromJson<SerializedLevel>(reader.ReadToEnd());
-        reader.Close();
+		
+        SerializedLevel serializedLevel = LevelLoader.LoadLevel(levelName);
         
-        foreach (var slo in serializedLevel.LevelObjects)
-        {
+        foreach (var slo in serializedLevel.LevelObjects) {
 			GameObject prefab = (GameObject)AssetDatabase.LoadAssetAtPath(PathToAsset(slo.prefab), typeof(GameObject));
 	        var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-	        go.transform.parent = level.transform;
+	        go.transform.parent = currentLevelParent.transform;
 	        go.transform.localPosition = slo.pos;
 	        go.transform.localEulerAngles = slo.angles;
 	        Undo.RegisterCreatedObjectUndo (go, "Create object");
         }
 
-        RefreshSceneLevels();
-		level.transform.position = levelPosition;
+		currentLevelParent.transform.position = levelPosition;
 		newLevelName = levelName;
 		isLoading = false;
 		isDirty = false;
@@ -496,6 +497,10 @@ public class LevelEditor : EditorWindow {
 	}
          
 	public void SceneGUI(SceneView sceneView) {
+
+		if (Utils.isMetaScene) return;
+		if (currentLevelParentRef == null) return;
+
 		e = Event.current;
 		in2DMode = sceneView.in2DMode;
 
@@ -548,7 +553,7 @@ public class LevelEditor : EditorWindow {
 					mousePosOnClick = e.mousePosition;
 					
 				} else if (e.button == 1) {
-					selGridInt = 0;
+					selGridInt = 1;
 					Ray ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
 					RaycastHit hit = new RaycastHit();
 
@@ -587,7 +592,7 @@ public class LevelEditor : EditorWindow {
 			Ray ray = HandleUtility.GUIPointToWorldRay(mousePos);
 
          	RaycastHit hit = new RaycastHit();
-			if (Physics.Raycast(ray, out hit, 1000.0f)) {
+			if (Physics.Raycast(ray, out hit, 100.0f)) {
 				Vector3 pos = hit.point + (hit.normal * 0.5f);
 				if (selGridInt == 1) {
 					pos = hit.transform.position;
@@ -623,8 +628,7 @@ public class LevelEditor : EditorWindow {
 
 			newGameObject = PrefabUtility.InstantiatePrefab(prefab as GameObject) as GameObject;
 			newGameObject.transform.position = pos;
-
-			newGameObject.transform.parent = level.transform;
+			newGameObject.transform.parent = currentLevelParent.transform;
 
 			int z = 0;
 			switch (rotateInt) {
@@ -664,12 +668,12 @@ public class LevelEditor : EditorWindow {
     }
                         
     void RotateLevel(int degrees) {
-    	level.transform.eulerAngles += new Vector3 (0,0,degrees);
+    	currentLevelParent.transform.eulerAngles += new Vector3 (0,0,degrees);
 		isDirty = true;
     }
             
     void InvertLevel(string axis) {
-    	foreach (Transform child in level.transform) {
+    	foreach (Transform child in currentLevelParent.transform) {
 			Vector3 p = child.position;
 			Vector3 s = child.localScale;
 			if (axis == "x") {
@@ -688,8 +692,9 @@ public class LevelEditor : EditorWindow {
 		bool foundSomething = true;
 		while (foundSomething) {
 			foundSomething = false;
-			foreach (Transform child in level.transform) {
-				foreach (Transform tile in child) {
+			foreach (Transform child in currentLevelParent.transform) {
+				Transform target = GetTarget(child);
+				foreach (Transform tile in target) {
 					bool atPosition = (in2DMode) ? Utils.VectorRoughly2D(tile.position, pos) : Utils.VectorRoughly(tile.position, pos);
 					if (tile.CompareTag("Tile") && atPosition) {
 						foundSomething = true;
@@ -701,6 +706,13 @@ public class LevelEditor : EditorWindow {
 		}
 		isDirty = true;
     }
+
+	Transform GetTarget(Transform t) {
+		if (t.name.Contains("Extender")) {
+			return t.GetComponentInChildren<Wall>().transform;
+		}
+		return t;
+	}
 }      
 
 #endif
